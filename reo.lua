@@ -132,4 +132,3 @@ local redTweenInfo = TweenInfo.new(3)
             end
         end
     end
-end
