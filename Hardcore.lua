@@ -56,6 +56,12 @@ coroutine.wrap(function()
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/reo.lua?raw=true"))()
     end
 end)()
+coroutine.wrap(function()
+    while true do
+        wait(350)
+        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/reb.lua?raw=true"))()
+    end
+end)()
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
