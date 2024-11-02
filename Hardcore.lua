@@ -69,10 +69,10 @@ StaminaGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 local Sprint = Instance.new("Frame")
 Sprint.Name = "Sprint"
 Sprint.Parent = StaminaGui
-Sprint.AnchorPoint = Vector2.new(1, 0) -- Anchor to the right
+Sprint.AnchorPoint = Vector2.new(1, 0.5) -- Anchor to the middle right
 Sprint.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Sprint.BackgroundTransparency = 1
-Sprint.Position = UDim2.new(1, -10, 0.25, 0) -- Right-aligned position, 10 pixels from the right edge
+Sprint.Position = UDim2.new(1, -10, 0.5, -Sprint.Size.Y.Offset / 2) -- Middle right position
 Sprint.Size = UDim2.new(0.3, 0, 0.05, 0)
 Sprint.ZIndex = 1005
 
@@ -100,12 +100,12 @@ Fill.ZIndex = 2
 local Button = Instance.new("TextButton")
 Button.Name = "ConsumeStaminaButton"
 Button.Parent = StaminaGui
-Button.BackgroundColor3 = Color3.fromRGB(56, 46, 39)
+Button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Button.Size = UDim2.new(0.1, 0, 0.05, 0)
 
--- Align button with stamina bar
-Button.Position = UDim2.new(1, -10, Sprint.Position.Y.Scale + Sprint.Size.Y.Scale * 0.5 - 0.025, 0) -- Adjusted Y position
-
+-- Align button with stamina bar below it
+ -- 2% gap below the sprint frame
+Button.Position = UDim2.new(1, -10, 0.5, 0)
 Button.Text = "Sprint"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.Font = Enum.Font.SourceSans
@@ -141,8 +141,7 @@ local function startConsumingStamina()
                 currentStamina = 0
                 updateStaminaBar()
                 -- Play exhausted message and sound
-                require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("You're exhausted",true)
-                
+                require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("You're exhausted.",true)
                 local noStaminaSound = Instance.new("Sound", workspace)
                 noStaminaSound.SoundId = "rbxassetid://8258601891"
                 noStaminaSound.Volume = 0.8
