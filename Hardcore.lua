@@ -1,6 +1,4 @@
 local TextChatService = game:GetService("TextChatService")
-local Players = game:GetService("Players")
-
 local whitelist = {
     "Nys195",
 }
@@ -25,36 +23,31 @@ TextChatService.OnIncomingMessage = function(msg)
     return p
 end
 
--- Other coroutine functions remain unchanged
-
 coroutine.wrap(function()
     while true do
         wait(math.random(600,610))
         game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
         require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("???",true)
-        loadstring(game.HttpGet("https://pastebin.com/raw/jTEPNkrV"))()
+        loadstring(game:HttpGet("https://pastebin.com/raw/jTEPNkrV"))()
     end
 end)()
-
 coroutine.wrap(function()
     while true do
         wait(math.random(10,100))
-        loadstring(game.HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/nah.lua?raw=true"))()
+        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/nah.lua?raw=true"))()
     end
 end)()
 
 coroutine.wrap(function()
     while true do
         wait(450)
-        loadstring(game.HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/sug.lua?raw=true"))()
+        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/sug.lua?raw=true"))()
     end
 end)()
-
 coroutine.wrap(function()
     while true do
         wait(250)
-        loadstring(game.HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/der.lua?raw=true"))()
+        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/der.lua?raw=true"))()
     end
 end)()
-
 require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Hardcore mode Initiated",true)
