@@ -58,17 +58,7 @@ local entity = spawner.Create({
 
 ---====== Debug entity ======---
 entity:SetCallback("OnSpawned", function()
-    local function turnRoomRed()
-    local redTweenInfo = TweenInfo.new(3)
-    local redInfo = {Color = Color3.new(1, 0, 0.133333)}
-    for _, v in pairs(workspace.CurrentRooms:GetDescendants()) do
-        if v:IsA("Light") then
-            game.TweenService:Create(v, redTweenInfo, redInfo):Play()
-            if v.Parent.Name == "LightFixture" then
-                game.TweenService:Create(v.Parent, redTweenInfo, redInfo):Play()
-            end
-        end
-    end
+    print("What hell?")
 end)
 
 entity:SetCallback("OnStartMoving", function()
@@ -129,3 +119,15 @@ end)
 ---====== Run entity ======---
 
 entity:Run()
+
+local redTweenInfo = TweenInfo.new(3)
+    local redInfo = {Color = Color3.new(1, 0, 0.133333)}
+    for _, v in pairs(workspace.CurrentRooms:GetDescendants()) do
+        if v:IsA("Light") then
+            game.TweenService:Create(v, redTweenInfo, redInfo):Play()
+            if v.Parent.Name == "LightFixture" then
+                game.TweenService:Create(v.Parent, redTweenInfo, redInfo):Play()
+            end
+        end
+    end
+end
