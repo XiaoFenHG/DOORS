@@ -4,7 +4,7 @@ local LightReplaceModel = game:GetObjects("rbxassetid://12543866876")[1] or nil
 function ChangeLightModel(room)
     for i, v in pairs(room.Assets.Light_Fixtures:GetDescendants()) do
         if v.Name == "LightStand" then
-            if game.ReplicatedStorage.GameData.LatestRoom.Value < 51 then
+            if game.ReplicatedStorage.GameData.LatestRoom.Value < 100 then
                 local torch = LightReplaceModel:Clone()
                 torch.Parent = room.Assets.Light_Fixtures
                 torch.LightFixture.PointLight.Changed:Connect(function()
