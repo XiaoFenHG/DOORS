@@ -11,6 +11,51 @@ local function isWhitelisted(username)
     end
     return false
 end
+local painters = 1
+local paints = {
+	[1] = {"rbxassetid://11881132074","Despair"},
+	[2] = {"rbxassetid://11881132745","Odd feline Specimen"},
+	[3] = {"rbxassetid://11881654771","A tryhard..."},
+	[4] = {"rbxassetid://7084794697","him."},
+    [5] = {"rbxassetid://18148044143","...."}
+}
+---
+--- NEW PAINTINGS YOOOOOOOOOOOOOOOOOOOOO
+game:GetService("ReplicatedStorage").GameData.LatestRoom.Changed:Connect(function()
+	local room = workspace.CurrentRooms[game:GetService("ReplicatedStorage").GameData.LatestRoom.Value]
+	if room:FindFirstChild("Assets") then
+		local paintings = {}
+		for i,painting in next,room:FindFirstChild("Assets"):GetChildren() do
+			if painting.Name:find("Painting") then
+				table.insert(paintings,painting)
+			end
+		end
+		if #paintings > 0 then
+			local currentpainting
+			if paintings[#paintings] then
+				painters = painters + 1
+				currentpainting = paintings[#paintings]
+			else
+				currentpainting = paintings[1]
+			end
+			if currentpainting then
+				if currentpainting:FindFirstChild("Canvas") then
+					local selected = paints[math.random(1,#paints)]
+					if currentpainting:FindFirstChild("InteractPrompt") then
+						local cloning = currentpainting:FindFirstChild("InteractPrompt"):Clone() cloning.Name = "fakeInteract"
+						cloning.Parent = currentpainting
+						currentpainting:FindFirstChild("InteractPrompt"):Destroy()
+						local t = cloning.Triggered:Connect(function()
+							firesignal(game.ReplicatedStorage.EntityInfo.Caption.OnClientEvent,string.gsub("This painting is titled \"NAMEOFTHING\"","NAMEOFTHING",selected[2]))
+						end)
+					end
+					currentpainting:FindFirstChild("Canvas"):FindFirstChildOfClass("SurfaceGui"):FindFirstChildOfClass("ImageLabel").Image = selected[1]
+				end
+			end
+		end
+	end
+end)
+
 
 TextChatService.OnIncomingMessage = function(msg)
     local p = Instance.new("TextChatMessageProperties")
@@ -23,16 +68,24 @@ TextChatService.OnIncomingMessage = function(msg)
     return p
 end
 
+local function isSeekMusicPlaying()
+    local seekMusic = game.ReplicatedStorage:FindFirstChild("FloorReplicated"):FindFirstChild("SeekMusic")
+    return seekMusic and seekMusic.IsPlaying
+end
+
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(math.random(600,610))
         game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
         require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("???",true)
         loadstring(game:HttpGet("https://pastebin.com/raw/jTEPNkrV"))()
     end
 end)()
+
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(math.random(10,100))
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/nah.lua?raw=true"))()
     end
@@ -40,30 +93,39 @@ end)()
 
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(450)
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/sug.lua?raw=true"))()
     end
 end)()
+
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(250)
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/der.lua?raw=true"))()
     end
 end)()
+
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(175)
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/reo.lua?raw=true"))()
     end
 end)()
+
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(350)
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/reb.lua?raw=true"))()
     end
 end)()
+
 coroutine.wrap(function()
     while true do
+        if isSeekMusicPlaying() then return end
         wait(560)
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/sil.lua?raw=true"))()
     end
