@@ -1,3 +1,42 @@
+local LightReplaceModel = game:GetObjects("rbxassetid://12543866876")[1] or nil
+
+-- Function to change the light model in a room
+function ChangeLightModel(room)
+    for i, v in pairs(room.Assets.Light_Fixtures:GetDescendants()) do
+        if v.Name == "LightStand" then
+            if game.ReplicatedStorage.GameData.LatestRoom.Value < 51 then
+                local torch = LightReplaceModel:Clone()
+                torch.Parent = room.Assets.Light_Fixtures
+                torch.LightFixture.PointLight.Changed:Connect(function()
+                    torch.LightFixture.Neon.atachm["Ok you cannot tell me this isnt good"].Enabled = torch.LightFixture.PointLight.Enabled
+                    torch.LightFixture.Neon["Bright sh idfk"].ParticleEmitter.Enabled = torch.LightFixture.PointLight.Enabled
+                    torch.LightFixture:WaitForChild('Dust').ParticleEmitter.Enabled = torch.LightFixture.PointLight.Enabled
+                end)
+                torch:PivotTo(v:GetPivot())
+                v:Destroy()
+            else
+                v:Destroy()
+            end
+        end
+    end
+end
+
+-- Function to change the fog settings
+    -- Get services
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+-- Set up horror atmosphere
+Lighting.Ambient = Color3.new(0, 0, 0)
+Lighting.Brightness = 0.1
+Lighting.FogEnd = 999999
+Lighting.FogColor = Color3.new(0, 0, 0)
+
+-- Change the light model in the latest room
+local latestroom = game.ReplicatedStorage.GameData.LatestRoom.Value
+local roomlatestworkspace = workspace.CurrentRooms[latestroom]
+ChangeLightModel(roomlatestworkspace)
+
 local TextChatService = game:GetService("TextChatService")
 local whitelist = {
     "Nys195",
