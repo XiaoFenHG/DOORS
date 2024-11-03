@@ -1,114 +1,80 @@
-local plr = game.Players.LocalPlayer
-local chr = plr.Character or plr.CharacterAdded:Wait()
-local cam = workspace.CurrentCamera
-local offsetgyat = 10
-local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
--- Define a customizable entity name
-local entityName = "Shocker"  -- Change this to whatever name you want
-local entity = game:GetObjects("rbxassetid://11547803978")[1]
-entity.Name = entityName  -- Set the entity's name
-entity.Parent = workspace
-local primary_part = entity:FindFirstChildWhichIsA("BasePart") or entity:FindFirstChildWhichIsA("Part")
-entity.PrimaryPart = primary_part
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 
-if not entity.PrimaryPart then return end
+local hasBeenHurt = false -- Initialize the variable to track if the player has been hurt
 
-entity:SetPrimaryPartCFrame(chr.HumanoidRootPart.CFrame * CFrame.new(0, 0, -offsetgyat))
-entity.PrimaryPart.Anchored = true
+local function spawnShocker()
+    local shockerModel = game:GetObjects("rbxassetid://11547803978")[1]
+    shockerModel.PrimaryPart = shockerModel:FindFirstChild("HumanoidRootPart") or shockerModel:FindFirstChildWhichIsA("Part")
+    
+    local camera = Workspace.CurrentCamera
+    shockerModel:SetPrimaryPartCFrame(camera.CFrame * CFrame.new(0, 0, -7))
+    shockerModel.Parent = Workspace
 
-local playerTookDamage = false  -- Track if the player took damage
+    local oogaBoogaaPart = shockerModel:WaitForChild("OOGA BOOGAAAA")
+    local horrorScream = shockerModel:WaitForChild("OOGA BOOGAAAA"):WaitForChild("HORROR SCREAM 15")
 
-local function resetDamageFlag()
-    wait(2)  -- Wait for 2 seconds
-    playerTookDamage = false  -- Reset the flag
-end
+    local lookDuration = 4
+    local startTime = tick()
+    local playerLookingAtShocker = true
 
-local function damageblud()
-    local hum = chr:FindFirstChild("Humanoid")
-    if hum then
-        local dmg = math.random(15, 25)
-        hum:TakeDamage(dmg)
+    while playerLookingAtShocker do
+        wait(0.1)
 
-        playerTookDamage = true  -- Player has taken damage
-        spawn(resetDamageFlag)  -- Start the reset flag coroutine
+        local angle = (oogaBoogaaPart.Position - character.PrimaryPart.Position).unit
+        local direction = camera.CFrame.LookVector
 
-        -- Check if the player is dead
-        if hum.Health <= 0 then
-            DEATHMESSAGE("You were defeated by " .. entity.Name .. "!", entity.Name)
+        if (angle:Dot(direction) > 0.9) then
+            if tick() - startTime >= lookDuration then
+                horrorScream:Play()
+                humanoid:TakeDamage(30)
+                hasBeenHurt = true -- Set the variable to true when the player is hurt
+                playerLookingAtShocker = false
+
+                local speed = 10
+                local targetPosition = character.PrimaryPart.Position
+
+                while oogaBoogaaPart.Position.Y > targetPosition.Y do
+                    local directionToPlayer = (targetPosition - oogaBoogaaPart.Position).unit
+                    oogaBoogaaPart.Position = oogaBoogaaPart.Position + directionToPlayer * speed * 0.1
+                    wait(0.1)
+                end
+
+                oogaBoogaaPart.CanCollide = false
+                oogaBoogaaPart.Anchored = false
+                wait(3)
+                shockerModel:Destroy()
+                game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = "Shocker"
+                firesignal(game.ReplicatedStorage.RemotesFolder.DeathHint.OnClientEvent, {"You died to who you call Shocker...", "Don't look at it or it stuns you!"}, "Blue")
+                break
+            end
+        else
+            oogaBoogaaPart.CanCollide = false
+            oogaBoogaaPart.Anchored = false
+            break
         end
     end
-end
+    oogaBoogaaPart.CanCollide = false
+    oogaBoogaaPart.Anchored = false
+    wait(3)
+    shockerModel:Destroy()
 
-local function check()
-    local direction = (entity.PrimaryPart.Position - cam.CFrame.Position).unit
-    local dot_product = direction:Dot(cam.CFrame.LookVector)
-    return dot_product > 0.95
-end
+    -- Load achievement giver
+    local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
 
-local function move(target, dur)
-    local tween_info = TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(entity.PrimaryPart, tween_info, {CFrame = target})
-    tween:Play()
-    tween.Completed:Wait()
-end
-
-entity.PrimaryPart.Anchored = false
-wait(1.5)
-
-if check() then
-    move(chr.HumanoidRootPart.CFrame, 0.5)
-    damageblud()
-end
-
-local fallframe = entity.PrimaryPart.CFrame * CFrame.new(0, -100, 0)
-local falldur = 1
-
-move(fallframe, falldur)
-
-entity.PrimaryPart.Anchored = false
-entity.PrimaryPart.CanCollide = false
-
-wait(10)
-entity:Destroy()
-
--- Function to display the death message and handle achievements
-local achievementGiver = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Doors/Custom%20Achievements/Source.lua"))()
-
-function DEATHMESSAGE(message, who)
-    if not message or not who then return end
-
-    -- Get the player stats
-    local playerName = game.Players.LocalPlayer.Name
-    local playerStats = game:GetService("ReplicatedStorage").GameStats["Player_"..playerName]
-
-    if playerStats then
-        -- Update the death cause once
-        playerStats.Total.DeathCause.Value = who
-        
-        -- Find the connection to the DeathHint event
-        local connection = getconnections(game:GetService("ReplicatedStorage").EntityInfo.DeathHint.OnClientEvent)[1]
-        
-        if connection and connection.Function then
-            -- Update the death hint message
-            debug.setupvalue(connection.Function, 1, message, 'Blue')
-        end
-    else
-        warn("Player stats not found for: " .. playerName)
-    end
-
-    -- Achievement logic
-    if playerTookDamage then
-        -- Player took damage, do not grant achievement
-        print("Achievement not granted due to damage taken.")
-    else
-        -- Grant achievement if no damage was taken
+    -- Display achievement if the player hasn't been hurt
+    if not hasBeenHurt then
         achievementGiver({
-            Title = "Survivor",
-            Desc = "You survived the encounter without taking damage!",
-            Reason = "No damage taken from the entity.",
-            Image = "rbxassetid://12309073114"
+            Title = "Shocking Experience",
+            Desc = "Look at me.",
+            Reason = "Encounter Shocker.",
+            Image = "rbxassetid://17857830685"
         })
-        print("Achievement granted: Survivor")
     end
 end
+
+spawnShocker()
