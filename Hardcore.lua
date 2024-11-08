@@ -173,7 +173,7 @@ coroutine.wrap(function()
     while true do
         if isSeekMusicPlaying() then return end
         wait(1600)
-        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/a60.luaa?raw=true"))()
+        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/a60.lua?raw=true"))()
     end
 end)()
 local Player = game.Players.LocalPlayer
