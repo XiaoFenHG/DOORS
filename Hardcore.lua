@@ -169,6 +169,13 @@ coroutine.wrap(function()
         loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/sil.lua?raw=true"))()
     end
 end)()
+coroutine.wrap(function()
+    while true do
+        if isSeekMusicPlaying() then return end
+        wait(1600)
+        loadstring(game:HttpGet("https://github.com/XiaoFenHG/DOORS/blob/main/a60.luaa?raw=true"))()
+    end
+end)()
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
