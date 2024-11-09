@@ -20,7 +20,6 @@ function ChangeLightModel(room)
         end
     end
 end
-
 -- Function to change the fog settings
     -- Get services
 local Workspace = game:GetService("Workspace")
@@ -28,8 +27,8 @@ local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 -- Set up horror atmosphere
 Lighting.Ambient = Color3.new(0, 0, 0)
-Lighting.Brightness = 0.1
-Lighting.FogEnd = 999999
+Lighting.Brightness = 0
+Lighting.FogEnd = 0
 Lighting.FogColor = Color3.new(0, 0, 0)
 
 -- Change the light model in the latest room
@@ -56,7 +55,7 @@ local paints = {
 	[2] = {"rbxassetid://11881132745","Odd feline Specimen"},
 	[3] = {"rbxassetid://11881654771","A tryhard..."},
 	[4] = {"rbxassetid://7084794697","him."},
-    [5] = {"rbxassetid://18148044143","...."}
+        [5] = {"rbxassetid://18148044143","...."}
 }
 ---
 --- NEW PAINTINGS YOOOOOOOOOOOOOOOOOOOOO
@@ -313,3 +312,23 @@ coroutine.wrap(recoverStamina)()
 -- Initial update
 updateStaminaBar()
 require(game.Players.LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game).caption("Hardcore mode Initiated",true)
+
+local shut = game.Players.LocalPlayer.PlayerGui.MainUI.MainFrame.IntroText
+local intro = shut:Clone()
+intro.Parent = game.Players.LocalPlayer.PlayerGui.MainUI
+intro.Name = "IntroTextPleaseThankYou"
+intro.Visible = true
+intro.Text = "Hardcore Dread OUT"
+intro.TextTransparency = 0
+local underline = UDim2.new(1.1, 0, 0.015, 6)
+game.TweenService:Create(intro.Underline, TweenInfo.new(3), {Size = underline}):Play()
+wait(7)
+game.TweenService:Create(intro.Underline, TweenInfo.new(1.3), {Size = UDim2.new(0.95, 0, 0.015, 6)}):Play()
+wait(1)
+game.TweenService:Create(intro.Underline, TweenInfo.new(2), {ImageTransparency = 1}):Play()
+game.TweenService:Create(intro, TweenInfo.new(2), {TextTransparency = 1}):Play()
+game.TweenService:Create(intro.Underline, TweenInfo.new(7), {Size = UDim2.new(0, 0, 0.015, 6)}):Play()
+wait(2.3)
+intro.Visible = false
+wait(5)
+intro:Destroy()
