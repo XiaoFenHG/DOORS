@@ -27,8 +27,8 @@ local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
 -- Set up horror atmosphere
 Lighting.Ambient = Color3.new(0, 0, 0)
-Lighting.Brightness = 0
-Lighting.FogEnd = 0
+Lighting.Brightness = 0.001
+Lighting.FogEnd = 15
 Lighting.FogColor = Color3.new(0, 0, 0)
 
 -- Change the light model in the latest room
