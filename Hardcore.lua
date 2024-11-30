@@ -22,15 +22,120 @@ function ChangeLightModel(room)
 end
 -- Function to change the fog settings
     -- Get services
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local SoundService = game:GetService("SoundService")
--- Set up horror atmosphere
-Lighting.Ambient = Color3.new(0, 0, 0)
-Lighting.Brightness = 0.001
-Lighting.FogEnd = 15
-Lighting.FogColor = Color3.new(0, 0, 0)
+local playingSounds = {} -- Table to keep track of currently playing sounds
 
+local function applySoundEffects(sound)
+    -- Decrease sound volume
+    sound.Volume = 1 -- Set to low volume
+
+    -- Create and configure reverb effect
+    local reverb = Instance.new("ReverbSoundEffect")
+    reverb.Density = 0.8 -- Increase reverb density
+    reverb.DecayTime = 5 -- Increase reverb decay time
+    reverb.Parent = sound
+
+    -- Create and configure echo effect with increased delay
+    local echo = Instance.new("EchoSoundEffect")
+    echo.Delay = 2.5 -- Increase echo delay to 2.5 seconds
+    echo.WetLevel = 0.9 -- Increase echo wet level
+    echo.Parent = sound
+
+    -- Create and configure equalizer
+    local equalizer = Instance.new("EqualizerSoundEffect")
+    equalizer.LowGain = 2.5 -- Boost low frequencies
+    equalizer.MidGain = 1.5 -- Boost mid frequencies
+    equalizer.HighGain = 1.5 -- Boost high frequencies
+    equalizer.Parent = sound
+
+    -- Create and configure compressor
+    local compressor = Instance.new("CompressorSoundEffect")
+    compressor.Threshold = -15 -- Set threshold
+    compressor.Ratio = 3 -- Compression ratio
+    compressor.Attack = 0.02 -- Attack time
+    compressor.Release = 0.2 -- Release time
+    compressor.Parent = sound
+
+    -- Manage sound playback state
+    sound.Ended:Connect(function()
+        playingSounds[sound] = nil -- Remove the sound from the table when it finishes playing
+    end)
+end
+
+-- Function to stop sound after echo effect ends, considering non-looping sounds
+local function stopSoundAfterEcho(sound)
+    if sound.Looped then return end -- Skip if the sound is set to loop
+
+    local totalDuration = sound.TimeLength + 2.5 -- Add 2.5 seconds for the echo delay
+    task.delay(totalDuration + 3, function() -- Include additional time for the echo effect
+        if sound and sound:IsA("Sound") then -- Check if sound is valid before stopping
+            pcall(function()
+                sound:Stop()
+                playingSounds[sound] = nil -- Remove the sound from the table
+            end)
+        end
+    end)
+end
+
+-- Recursive function to apply effects to all descendants
+local function applyEffectsToAllDescendants(parent, maxPerFrame)
+    local processed = 0
+    for _, obj in ipairs(parent:GetDescendants()) do
+        if processed >= maxPerFrame then
+            break
+        end
+        pcall(function()
+            if obj:IsA("Sound") then
+                if playingSounds[obj] then
+                    obj:Stop() -- Stop the sound if it's already playing
+                end
+                applySoundEffects(obj)
+                stopSoundAfterEcho(obj) -- Stop sound after echo effect ends
+                playingSounds[obj] = true -- Mark the sound as playing
+                processed = processed + 1
+            elseif obj:IsA("BasePart") then
+                applyHiddenLight(obj) -- Assuming applyHiddenLight is defined elsewhere
+                processed = processed + 1
+            end
+        end)
+    end
+    return processed
+end
+
+-- Apply effects to newly created objects
+workspace.DescendantAdded:Connect(function(obj)
+    pcall(function()
+        if obj:IsA("Sound") then
+            if playingSounds[obj] then
+                obj:Stop() -- Stop the sound if it's already playing
+            end
+            applySoundEffects(obj)
+            stopSoundAfterEcho(obj) -- Stop sound after echo effect ends
+            playingSounds[obj] = true -- Mark the sound as playing
+        elseif obj:IsA("BasePart") then
+            applyHiddenLight(obj) -- Assuming applyHiddenLight is defined elsewhere
+        end
+    end)
+end)
+
+-- Function to apply sound effects to the character
+local function applyCharacterSoundEffects(character)
+    for _, sound in ipairs(character:GetDescendants()) do
+        if sound:IsA("Sound") then
+            applySoundEffects(sound)
+            stopSoundAfterEcho(sound)
+            playingSounds[sound] = true
+        end
+    end
+end
+
+-- Apply sound effects to the player's character
+local player = game.Players.LocalPlayer
+player.CharacterAdded:Connect(function(character)
+    applyCharacterSoundEffects(character)
+end)
+if player.Character then
+    applyCharacterSoundEffects(player.Character)
+end
 -- Change the light model in the latest room
 local latestroom = game.ReplicatedStorage.GameData.LatestRoom.Value
 local roomlatestworkspace = workspace.CurrentRooms[latestroom]
