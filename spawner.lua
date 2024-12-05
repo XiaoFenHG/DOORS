@@ -75,30 +75,31 @@ end
 
 -- 获取路径节点并按顺序移动
 function _G.EntitySpawner:MoveAlongPath(speed)
-    local pathNodes = Workspace.CurrentRooms:FindFirstChild("PathfindNodes")
-    if not pathNodes then
-        error("No PathfindNodes found in currentRooms.")
-    end
+    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
+        local pathNodes = room:FindFirstChild("PathfindNodes")
+        if pathNodes then
+            local nodes = {}
+            for _, node in pairs(pathNodes:GetChildren()) do
+                table.insert(nodes, node.Position)
+            end
 
-    local nodes = {}
-    for _, node in pairs(pathNodes:GetChildren()) do
-        table.insert(nodes, node.Position)
-    end
+            table.sort(nodes, function(a, b)
+                return (a - _G.positions.entrancePos).Magnitude < (b - _G.positions.entrancePos).Magnitude
+            end)
 
-    table.sort(nodes, function(a, b)
-        return (a - _G.positions.entrancePos).Magnitude < (b - _G.positions.entrancePos).Magnitude
-    end)
-
-    for _, position in ipairs(nodes) do
-        if (position - _G.positions.exitPos).Magnitude < 10 then
-            -- 如果节点距离出口小于10个单位，则直接移动到出口
-            break
+            for _, position in ipairs(nodes) do
+                if (position - _G.positions.exitPos).Magnitude < 10 then
+                    -- 如果节点距离出口小于10个单位，则直接移动到出口
+                    break
+                end
+                self:MoveTo(position, speed)
+            end
         end
-        self:MoveTo(position, speed)
     end
 end
 
 -- 查找最远的出口
+-- 查找最远的出口 (续)
 function _G.EntitySpawner:FindFarthestExit(speed)
     local farthestDistance = 0
     local exit = nil
@@ -138,6 +139,28 @@ function _G.EntitySpawner:MoveTo(position, speed)
 end
 
 -- 导航逻辑
+function _G.EntitySpawner:NavigateToRoom(params)
+    -- 确保入口和出口位置已设置
+    if not _G.positions or not _G.positions.entrancePos then
+        error("Entrance position not set.")
+    end
+
+    -- 将实体位置设定在入口位置
+    _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
+
+    -- 移动前等待时间
+    wait(params.WaitBeforeMove or 0)
+
+    -- 按路径节点移动
+    self:MoveAlongPath(params.MoveSpeed)
+
+    -- 获取并移动到出口位置
+    self:FindFarthestExit(params.MoveSpeed)
+
+    -- 检测范围内是否有玩家
+    self:CheckForPlayers(params.DetectionRange)
+end
+
 -- 反弹逻辑
 function _G.EntitySpawner:Rebound(minRebounds, maxRebounds, waitSeconds, moveSpeed)
     local reboundTimes = math.random(minRebounds, maxRebounds)
@@ -210,27 +233,4 @@ function _G.EntitySpawner:Jumpscare(imageID, audioID)
         }
     })
     JS:Run()
-end
-
--- 导航逻辑
-function _G.EntitySpawner:NavigateToRoom(params)
-    -- 确保入口和出口位置已设置
-    if not _G.positions or not _G.positions.entrancePos then
-        error("Entrance position not set.")
-    end
-
-    -- 将实体位置设定在入口位置
-    _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
-
-    -- 移动前等待时间
-    wait(params.WaitBeforeMove or 0)
-
-    -- 按路径节点移动
-    self:MoveAlongPath(params.MoveSpeed)
-
-    -- 获取并移动到出口位置
-    self:FindFarthestExit(params.MoveSpeed)
-
-    -- 检测范围内是否有玩家
-    self:CheckForPlayers(params.DetectionRange)
 end
