@@ -22,19 +22,7 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
         _G.entity.Parent = Workspace
 
         -- 获取指定房间的入口和出口
-        self:FindRoomPositions()
-        
-        -- 将实体位置设定在入口位置
-        if _G.positions and _G.positions.entrancePos then
-            _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
-        else
-            error("Entrance position not found.")
-        end
-
-        -- 自定义颜色
-        if params.EnableCustomColor then
-            self:PlaceColor(params.CustomColor)
-        end
+        self:FindRoomPositions(params)
     else
         error("Model not found in asset")
     end
@@ -55,7 +43,7 @@ function _G.EntitySpawner:PlaceColor(color)
 end
 
 -- 查找房间入口和出口
-function _G.EntitySpawner:FindRoomPositions()
+function _G.EntitySpawner:FindRoomPositions(params)
     local farthestDistance = 0
     local entrance = nil
     local exit = nil
@@ -77,6 +65,12 @@ function _G.EntitySpawner:FindRoomPositions()
 
     if entrance and exit then
         _G.positions = {entrancePos = entrance, exitPos = exit}
+        -- 将实体位置设定在入口位置
+        _G.entity:SetPrimaryPartCFrame(CFrame.new(entrance))
+        -- 移动前等待时间
+        wait(params.WaitBeforeMove or 0)
+        -- 动画移动到出口
+        self:MoveTo(exit, params.MoveSpeed)
     else
         error("No RoomEntrance or RoomExit found in currentRooms.")
     end
@@ -154,7 +148,7 @@ function _G.EntitySpawner:CheckForPlayers(range)
                 -- 触发伤害逻辑
                 local humanoid = character:FindFirstChildWhichIsA("Humanoid")
                 if humanoid then
-                    humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
+                    humanoid:TakeDamage(100)  -- 造成最大伤害
                 end
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
