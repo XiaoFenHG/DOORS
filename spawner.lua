@@ -123,8 +123,10 @@ function _G.EntitySpawner:CheckForPlayers(range)
                 character:BreakJoints()
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
-                -- 执行jumpscare
-                self:Jumpscare(_G.jumpscareImageID, _G.jumpscareAudioID)
+                -- 执行jumpscare（如果启用）
+                if _G.enableJumpscare then
+                    self:Jumpscare(_G.jumpscareImageID, _G.jumpscareAudioID)
+                end
             end
         end
     end
