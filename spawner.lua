@@ -20,16 +20,23 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
         _G.entity.PrimaryPart.Anchored = true
         _G.entity.PrimaryPart.CanCollide = false  -- 确保碰撞检测关闭
         _G.entity.Parent = Workspace
+
+        -- 获取指定房间的入口和出口
+        self:FindFarthestRoomExit()
+        
+        -- 将实体位置设定在入口位置
+        if _G.positions and _G.positions.entrancePos then
+            _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
+        else
+            error("Entrance position not found.")
+        end
+
+        -- 自定义颜色
+        if params.EnableCustomColor then
+            self:PlaceColor(params.CustomColor)
+        end
     else
         error("Model not found in asset")
-    end
-
-    -- 获取指定房间的入口和出口
-    self:FindFarthestRoomExit()
-
-    -- 自定义颜色
-    if params.EnableCustomColor then
-        self:PlaceColor(params.CustomColor)
     end
 end
 
