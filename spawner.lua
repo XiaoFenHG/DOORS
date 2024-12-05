@@ -153,7 +153,7 @@ function _G.EntitySpawner:CheckForPlayers(range)
                 -- 触发伤害逻辑
                 local humanoid = character:FindFirstChildWhichIsA("Humanoid")
                 if humanoid then
-                    humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
+                    humanoid:TakeDamage(100)  -- 造成最大伤害
                 end
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
