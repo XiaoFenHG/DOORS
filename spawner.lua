@@ -22,7 +22,7 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
         _G.entity.Parent = Workspace
 
         -- 获取指定房间的入口和出口
-        self:FindFarthestRoomExit()
+        self:FindRoomPositions()
         
         -- 将实体位置设定在入口位置
         if _G.positions and _G.positions.entrancePos then
@@ -54,28 +54,29 @@ function _G.EntitySpawner:PlaceColor(color)
     end
 end
 
--- 查找最远的RoomExit
-function _G.EntitySpawner:FindFarthestRoomExit()
+-- 查找房间入口和出口
+function _G.EntitySpawner:FindRoomPositions()
     local farthestDistance = 0
-    local farthestExit = nil
     local entrance = nil
+    local exit = nil
+
     for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
         local roomEntrance = room:FindFirstChild("RoomEntrance")
         if roomEntrance then
             entrance = roomEntrance.Position
         end
         local roomExit = room:FindFirstChild("RoomExit")
-        if roomExit then
-            local distance = (roomExit.Position - roomEntrance.Position).Magnitude
+        if roomExit and entrance then
+            local distance = (roomExit.Position - entrance).Magnitude
             if distance > farthestDistance then
                 farthestDistance = distance
-                farthestExit = roomExit.Position
+                exit = roomExit.Position
             end
         end
     end
 
-    if farthestExit and entrance then
-        _G.positions = {entrancePos = entrance, exitPos = farthestExit}
+    if entrance and exit then
+        _G.positions = {entrancePos = entrance, exitPos = exit}
     else
         error("No RoomEntrance or RoomExit found in currentRooms.")
     end
@@ -153,7 +154,7 @@ function _G.EntitySpawner:CheckForPlayers(range)
                 -- 触发伤害逻辑
                 local humanoid = character:FindFirstChildWhichIsA("Humanoid")
                 if humanoid then
-                    humanoid:TakeDamage(100)  -- 造成最大伤害
+                    humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
                 end
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
@@ -196,10 +197,12 @@ end
 function _G.EntitySpawner:NavigateToRoom(params)
     if not _G.positions.entrancePos or not _G.positions.exitPos then return end
 
+    -- 将实体位置设定在入口位置
+    _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
+    
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
 
-    _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
     self:MoveTo(_G.positions.exitPos, params.MoveSpeed)
     wait(params.waitsecond)
 
