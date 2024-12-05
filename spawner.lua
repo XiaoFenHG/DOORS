@@ -12,6 +12,12 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
     local model = game:GetObjects("rbxassetid://" .. params.Asset)[1]
     if model then
         _G.entity = model
+
+        -- 确保模型有 PrimaryPart
+        if not _G.entity.PrimaryPart then
+            _G.entity.PrimaryPart = _G.entity:FindFirstChildWhichIsA("BasePart") or _G.entity:FindFirstChildWhichIsA("MeshPart")
+        end
+
         _G.entity.PrimaryPart.Anchored = true
         _G.entity.PrimaryPart.CanCollide = false
         _G.entity.Parent = Workspace
