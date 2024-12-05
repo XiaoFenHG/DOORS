@@ -204,4 +204,4 @@ function _G.EntitySpawner:NavigateToRoom(params)
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
-end
+    end
