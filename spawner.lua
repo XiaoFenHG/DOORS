@@ -23,16 +23,13 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
 
         -- 获取入口位置
         self:FindEntrance()
-        
+
         -- 将实体位置设定在入口位置
         if _G.positions and _G.positions.entrancePos then
             _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
         else
             error("Entrance position not found.")
         end
-
-        -- 获取出口位置
-        self:FindFarthestExit()
 
         -- 自定义颜色
         if params.EnableCustomColor then
@@ -76,8 +73,33 @@ function _G.EntitySpawner:FindEntrance()
     end
 end
 
+-- 获取路径节点并按顺序移动
+function _G.EntitySpawner:MoveAlongPath(speed)
+    local pathNodes = Workspace.CurrentRooms:FindFirstChild("PathfindNodes")
+    if not pathNodes then
+        error("No PathfindNodes found in currentRooms.")
+    end
+
+    local nodes = {}
+    for _, node in pairs(pathNodes:GetChildren()) do
+        table.insert(nodes, node.Position)
+    end
+
+    table.sort(nodes, function(a, b)
+        return (a - _G.positions.entrancePos).Magnitude < (b - _G.positions.entrancePos).Magnitude
+    end)
+
+    for _, position in ipairs(nodes) do
+        if (position - _G.positions.exitPos).Magnitude < 10 then
+            -- 如果节点距离出口小于10个单位，则直接移动到出口
+            break
+        end
+        self:MoveTo(position, speed)
+    end
+end
+
 -- 查找最远的出口
-function _G.EntitySpawner:FindFarthestExit()
+function _G.EntitySpawner:FindFarthestExit(speed)
     local farthestDistance = 0
     local exit = nil
 
@@ -94,6 +116,8 @@ function _G.EntitySpawner:FindFarthestExit()
 
     if exit then
         _G.positions.exitPos = exit
+        -- 动画移动到出口
+        self:MoveTo(exit, speed)
     else
         error("No RoomExit found in currentRooms.")
     end
@@ -113,29 +137,7 @@ function _G.EntitySpawner:MoveTo(position, speed)
     tween.Completed:Wait()
 end
 
--- 震动效果
-function _G.EntitySpawner:Shake(duration, intensity)
-    -- 确保玩家的相机跟随他们的角色
-    local player = Players.LocalPlayer
-    local character = player.Character
-    local camera = Workspace.CurrentCamera
-    camera.CameraSubject = character and character:FindFirstChildWhichIsA("Humanoid")
-
-    -- 震动效果
-    for i = 1, duration * 60 do
-        -- 使相机同步震动
-        if camera then
-            camera.CFrame = camera.CFrame * CFrame.new(
-                math.random() * intensity - intensity / 2,
-                math.random() * intensity - intensity / 2,
-                math.random() * intensity - intensity / 2
-            )
-        end
-
-        RunService.Heartbeat:Wait()
-    end
-end
-
+-- 导航逻辑
 -- 反弹逻辑
 function _G.EntitySpawner:Rebound(minRebounds, maxRebounds, waitSeconds, moveSpeed)
     local reboundTimes = math.random(minRebounds, maxRebounds)
@@ -166,7 +168,7 @@ function _G.EntitySpawner:CheckForPlayers(range)
     for _, player in pairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
-            local distance = (character.PrimaryPart.Position - primaryPart.Position).magnitude
+            local distance = (character.PrimaryPart.Position - primaryPart.Position).Magnitude
             if distance <= range and not character:GetAttribute("Hiding") then
                 -- 触发伤害逻辑
                 local humanoid = character:FindFirstChildWhichIsA("Humanoid")
@@ -212,21 +214,23 @@ end
 
 -- 导航逻辑
 function _G.EntitySpawner:NavigateToRoom(params)
-    if not _G.positions.entrancePos or not _G.positions.exitPos then return end
+    -- 确保入口和出口位置已设置
+    if not _G.positions or not _G.positions.entrancePos then
+        error("Entrance position not set.")
+    end
 
     -- 将实体位置设定在入口位置
     _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
-    
+
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
 
-    self:MoveTo(_G.positions.exitPos, params.MoveSpeed)
-    wait(params.waitsecond)
+    -- 按路径节点移动
+    self:MoveAlongPath(params.MoveSpeed)
 
-    if params.Rebound then
-        self:Rebound(params.Min, params.Max, params.waitsecond, params.MoveSpeed)
-    end
+    -- 获取并移动到出口位置
+    self:FindFarthestExit(params.MoveSpeed)
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
-    end
+end
