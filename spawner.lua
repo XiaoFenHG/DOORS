@@ -1,4 +1,3 @@
--- EntitySpawner.lua
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
@@ -19,22 +18,14 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
         end
 
         _G.entity.PrimaryPart.Anchored = true
-        _G.entity.PrimaryPart.CanCollide = false
+        _G.entity.PrimaryPart.CanCollide = false  -- 确保碰撞检测关闭
         _G.entity.Parent = Workspace
     else
         error("Model not found in asset")
     end
 
     -- 获取指定房间的入口和出口
-    local room = Workspace.CurrentRooms:FindFirstChildOfClass("Model")
-    if not room then return end
-
-    local roomEntrance = room:FindFirstChild("RoomEntrance")
-    local roomExit = room:FindFirstChild("RoomExit")
-    _G.positions = {
-        entrancePos = roomEntrance and roomEntrance.Position,
-        exitPos = roomExit and roomExit.Position
-    }
+    self:FindFarthestRoomExit()
 
     -- 自定义颜色
     if params.EnableCustomColor then
@@ -56,41 +47,63 @@ function _G.EntitySpawner:PlaceColor(color)
     end
 end
 
--- 移动实体
-function _G.EntitySpawner:MoveTo(position, speed)
-    local primaryPart = _G.entity.PrimaryPart
-    primaryPart.Anchored = false
-    local reached = false
-
-    -- 保存连接对象以便稍后断开连接
-    local connection
-    local function onHeartbeat()
-        local direction = (position - primaryPart.Position).unit
-        primaryPart.Position = primaryPart.Position + direction * speed
-        if (primaryPart.Position - position).magnitude < 1 then
-            reached = true
-            connection:Disconnect()  -- 断开连接
+-- 查找最远的RoomExit
+function _G.EntitySpawner:FindFarthestRoomExit()
+    local farthestDistance = 0
+    local farthestExit = nil
+    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
+        local roomExit = room:FindFirstChild("RoomExit")
+        if roomExit then
+            local distance = (roomExit.Position - _G.entity.PrimaryPart.Position).Magnitude
+            if distance > farthestDistance then
+                farthestDistance = distance
+                farthestExit = roomExit
+            end
         end
     end
 
-    connection = RunService.Heartbeat:Connect(onHeartbeat)
-    repeat RunService.Heartbeat:Wait() until reached
+    if farthestExit then
+        _G.positions = {entrancePos = _G.entity.PrimaryPart.Position, exitPos = farthestExit.Position}
+    else
+        error("No RoomExit found in currentRooms.")
+    end
+end
+
+-- 动画移动实体
+function _G.EntitySpawner:MoveTo(position, speed)
+    local primaryPart = _G.entity.PrimaryPart
     primaryPart.Anchored = true
+    primaryPart.CanCollide = false  -- 确保碰撞检测关闭
+
+    -- 动画移动
+    local tweenInfo = TweenInfo.new((primaryPart.Position - position).Magnitude / speed)
+    local tweenGoal = {CFrame = CFrame.new(position)}
+    local tween = TweenService:Create(primaryPart, tweenInfo, tweenGoal)
+    tween:Play()
+    tween.Completed:Wait()
 end
 
 -- 震动效果
 function _G.EntitySpawner:Shake(duration, intensity)
-    local primaryPart = _G.entity.PrimaryPart
-    local originalPosition = primaryPart.Position
+    -- 确保玩家的相机跟随他们的角色
+    local player = Players.LocalPlayer
+    local character = player.Character
+    local camera = Workspace.CurrentCamera
+    camera.CameraSubject = character and character:FindFirstChildWhichIsA("Humanoid")
+
+    -- 震动效果
     for i = 1, duration * 60 do
-        primaryPart.Position = originalPosition + Vector3.new(
-            math.random() * intensity - intensity / 2,
-            math.random() * intensity - intensity / 2,
-            math.random() * intensity - intensity / 2
-        )
+        -- 使相机同步震动
+        if camera then
+            camera.CFrame = camera.CFrame * CFrame.new(
+                math.random() * intensity - intensity / 2,
+                math.random() * intensity - intensity / 2,
+                math.random() * intensity - intensity / 2
+            )
+        end
+
         RunService.Heartbeat:Wait()
     end
-    primaryPart.Position = originalPosition
 end
 
 -- 反弹逻辑
@@ -125,8 +138,11 @@ function _G.EntitySpawner:CheckForPlayers(range)
         if character and character.PrimaryPart then
             local distance = (character.PrimaryPart.Position - primaryPart.Position).magnitude
             if distance <= range and not character:GetAttribute("Hiding") then
-                -- 触发杀死逻辑
-                character:BreakJoints()
+                -- 触发伤害逻辑
+                local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+                if humanoid then
+                    humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
+                end
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
                 -- 执行jumpscare（如果启用）
