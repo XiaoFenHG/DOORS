@@ -21,8 +21,23 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
         _G.entity.PrimaryPart.CanCollide = false  -- 确保碰撞检测关闭
         _G.entity.Parent = Workspace
 
-        -- 获取指定房间的入口和出口
-        self:FindRoomPositions(params)
+        -- 获取入口位置
+        self:FindEntrance()
+        
+        -- 将实体位置设定在入口位置
+        if _G.positions and _G.positions.entrancePos then
+            _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
+        else
+            error("Entrance position not found.")
+        end
+
+        -- 获取出口位置
+        self:FindFarthestExit()
+
+        -- 自定义颜色
+        if params.EnableCustomColor then
+            self:PlaceColor(params.CustomColor)
+        end
     else
         error("Model not found in asset")
     end
@@ -42,20 +57,34 @@ function _G.EntitySpawner:PlaceColor(color)
     end
 end
 
--- 查找房间入口和出口
-function _G.EntitySpawner:FindRoomPositions(params)
-    local farthestDistance = 0
+-- 查找房间入口
+function _G.EntitySpawner:FindEntrance()
     local entrance = nil
-    local exit = nil
 
     for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
         local roomEntrance = room:FindFirstChild("RoomEntrance")
         if roomEntrance then
             entrance = roomEntrance.Position
+            break  -- 假设只有一个入口，找到后立即退出循环
         end
+    end
+
+    if entrance then
+        _G.positions = {entrancePos = entrance}
+    else
+        error("No RoomEntrance found in currentRooms.")
+    end
+end
+
+-- 查找最远的出口
+function _G.EntitySpawner:FindFarthestExit()
+    local farthestDistance = 0
+    local exit = nil
+
+    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
         local roomExit = room:FindFirstChild("RoomExit")
-        if roomExit and entrance then
-            local distance = (roomExit.Position - entrance).Magnitude
+        if roomExit then
+            local distance = (roomExit.Position - _G.positions.entrancePos).Magnitude
             if distance > farthestDistance then
                 farthestDistance = distance
                 exit = roomExit.Position
@@ -63,16 +92,10 @@ function _G.EntitySpawner:FindRoomPositions(params)
         end
     end
 
-    if entrance and exit then
-        _G.positions = {entrancePos = entrance, exitPos = exit}
-        -- 将实体位置设定在入口位置
-        _G.entity:SetPrimaryPartCFrame(CFrame.new(entrance))
-        -- 移动前等待时间
-        wait(params.WaitBeforeMove or 0)
-        -- 动画移动到出口
-        self:MoveTo(exit, params.MoveSpeed)
+    if exit then
+        _G.positions.exitPos = exit
     else
-        error("No RoomEntrance or RoomExit found in currentRooms.")
+        error("No RoomExit found in currentRooms.")
     end
 end
 
@@ -148,7 +171,7 @@ function _G.EntitySpawner:CheckForPlayers(range)
                 -- 触发伤害逻辑
                 local humanoid = character:FindFirstChildWhichIsA("Humanoid")
                 if humanoid then
-                    humanoid:TakeDamage(100)  -- 造成最大伤害
+                    humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
                 end
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
@@ -206,4 +229,4 @@ function _G.EntitySpawner:NavigateToRoom(params)
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
-end
+    end
