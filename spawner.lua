@@ -58,21 +58,26 @@ end
 function _G.EntitySpawner:FindFarthestRoomExit()
     local farthestDistance = 0
     local farthestExit = nil
+    local entrance = nil
     for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
+        local roomEntrance = room:FindFirstChild("RoomEntrance")
+        if roomEntrance then
+            entrance = roomEntrance.Position
+        end
         local roomExit = room:FindFirstChild("RoomExit")
         if roomExit then
-            local distance = (roomExit.Position - _G.entity.PrimaryPart.Position).Magnitude
+            local distance = (roomExit.Position - roomEntrance.Position).Magnitude
             if distance > farthestDistance then
                 farthestDistance = distance
-                farthestExit = roomExit
+                farthestExit = roomExit.Position
             end
         end
     end
 
-    if farthestExit then
-        _G.positions = {entrancePos = _G.entity.PrimaryPart.Position, exitPos = farthestExit.Position}
+    if farthestExit and entrance then
+        _G.positions = {entrancePos = entrance, exitPos = farthestExit}
     else
-        error("No RoomExit found in currentRooms.")
+        error("No RoomEntrance or RoomExit found in currentRooms.")
     end
 end
 
@@ -82,7 +87,7 @@ function _G.EntitySpawner:MoveTo(position, speed)
     primaryPart.Anchored = true
     primaryPart.CanCollide = false  -- 确保碰撞检测关闭
 
-    -- 动画移动
+    -- 确保直线移动
     local tweenInfo = TweenInfo.new((primaryPart.Position - position).Magnitude / speed)
     local tweenGoal = {CFrame = CFrame.new(position)}
     local tween = TweenService:Create(primaryPart, tweenInfo, tweenGoal)
@@ -204,4 +209,4 @@ function _G.EntitySpawner:NavigateToRoom(params)
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
-    end
+end
