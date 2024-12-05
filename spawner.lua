@@ -1,38 +1,53 @@
 -- EntitySpawner.lua
 local RunService = game:GetService("RunService")
-local InsertService = game:GetService("InsertService")
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
 _G.EntitySpawner = {}
 
--- 加载模型
-function _G.EntitySpawner:LoadModel(assetId)
-    local asset = InsertService:LoadAsset(assetId)
-    local model = asset:FindFirstChildOfClass("Model")
+-- 加载模型并获取对象
+function _G.EntitySpawner:LoadModelAndGetObject(params)
+    -- 加载模型
+    local model = game:GetObjects("rbxassetid://" .. params.Asset)[1]
     if model then
-        return model
+        _G.entity = model
+        _G.entity.PrimaryPart.Anchored = true
+        _G.entity.PrimaryPart.CanCollide = false
+        _G.entity.Parent = Workspace
     else
         error("Model not found in asset")
     end
-end
 
--- 生成实体
-function _G.EntitySpawner:Spawn(params)
-    _G.entity = self:LoadModel(params.Asset)
-    _G.entity.PrimaryPart.Anchored = true
-    _G.entity.PrimaryPart.CanCollide = false
-    _G.entity.Parent = Workspace
-end
+    -- 获取指定房间的入口和出口
+    local room = Workspace.CurrentRooms:FindFirstChildOfClass("Model")
+    if not room then return end
 
--- 获取指定房间的入口和出口
-function _G.EntitySpawner:GetRoomEntranceAndExit(room)
     local roomEntrance = room:FindFirstChild("RoomEntrance")
     local roomExit = room:FindFirstChild("RoomExit")
     _G.positions = {
         entrancePos = roomEntrance and roomEntrance.Position,
         exitPos = roomExit and roomExit.Position
     }
+
+    -- 自定义颜色
+    if params.EnableCustomColor then
+        self:PlaceColor(params.CustomColor)
+    end
+end
+
+-- 自定义颜色
+function _G.EntitySpawner:PlaceColor(color)
+    local tweenInfo = TweenInfo.new(3)
+    local colorInfo = {Color = color}
+    for _, v in pairs(Workspace.CurrentRooms:GetDescendants()) do
+        if v:IsA("Light") then
+            TweenService:Create(v, tweenInfo, colorInfo):Play()
+            if v.Parent.Name == "LightFixture" then
+                TweenService:Create(v.Parent, tweenInfo, colorInfo):Play()
+            end
+        end
+    end
 end
 
 -- 移动实体
@@ -106,18 +121,47 @@ function _G.EntitySpawner:CheckForPlayers(range)
             if distance <= range and not character:GetAttribute("Hiding") then
                 -- 触发杀死逻辑
                 character:BreakJoints()
+                -- 发送死亡消息
+                self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
+                -- 执行jumpscare
+                self:Jumpscare(_G.jumpscareImageID, _G.jumpscareAudioID)
             end
         end
     end
 end
 
+-- 发送死亡消息
+function _G.EntitySpawner:SendDeathMessage(message, who)
+    spawn(function()
+        for i = 1, 50 do 
+            wait()
+            game:GetService("ReplicatedStorage").GameStats["Player_".. game.Players.LocalPlayer.Name].Total.DeathCause.Value = who
+            debug.setupvalue(getconnections(game:GetService("ReplicatedStorage").EntityInfo.DeathHint.OnClientEvent)[1].Function, 1, message, 'Blue')
+        end
+    end)
+end
+
+-- 执行jumpscare
+function _G.EntitySpawner:Jumpscare(imageID, audioID)
+    local jumpscare = loadstring(game:HttpGet("https://raw.githubusercontent.com/munciseek/NIDO-HUD/main/Custom-jumpscare/Source"))()
+    local JS = jumpscare.Create({
+        image = {
+            Asset = "rbxassetid://" .. imageID
+        },
+        Audio = {
+            Asset = "rbxassetid://" .. audioID,
+            AC = false -- Play full audio
+        }
+    })
+    JS:Run()
+end
+
 -- 导航逻辑
 function _G.EntitySpawner:NavigateToRoom(params)
-    local room = Workspace.CurrentRooms:FindFirstChildOfClass("Model")
-    if not room then return end
-
-    self:GetRoomEntranceAndExit(room)
     if not _G.positions.entrancePos or not _G.positions.exitPos then return end
+
+    -- 移动前等待时间
+    wait(params.WaitBeforeMove or 0)
 
     _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
     self:MoveTo(_G.positions.exitPos, params.MoveSpeed)
