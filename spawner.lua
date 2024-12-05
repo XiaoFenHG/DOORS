@@ -90,16 +90,15 @@ function _G.EntitySpawner:MoveAlongPath(speed)
             for _, position in ipairs(nodes) do
                 if (position - _G.positions.exitPos).Magnitude < 10 then
                     -- 如果节点距离出口小于10个单位，则直接移动到出口
-                    break
+                    self:MoveTo(_G.positions.exitPos, speed)
+                    return
                 end
-                self:MoveTo(position, speed)
             end
         end
     end
 end
 
 -- 查找最远的出口
--- 查找最远的出口 (续)
 function _G.EntitySpawner:FindFarthestExit(speed)
     local farthestDistance = 0
     local exit = nil
