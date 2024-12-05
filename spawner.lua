@@ -26,7 +26,7 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
 
         -- 将实体位置设定在入口位置
         if _G.positions and _G.positions.entrancePos then
-            _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
+            _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
         else
             error("Entrance position not found.")
         end
@@ -61,7 +61,7 @@ function _G.EntitySpawner:FindEntrance()
     for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
         local roomEntrance = room:FindFirstChild("RoomEntrance")
         if roomEntrance then
-            entrance = roomEntrance.Position
+            entrance = roomEntrance.CFrame
             break  -- 假设只有一个入口，找到后立即退出循环
         end
     end
@@ -75,24 +75,15 @@ end
 
 -- 获取路径节点并按顺序移动
 function _G.EntitySpawner:MoveAlongPath(speed)
-    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
-        local pathNodes = room:FindFirstChild("PathfindNodes")
-        if pathNodes then
-            local nodes = {}
-            for _, node in pairs(pathNodes:GetChildren()) do
-                table.insert(nodes, node.Position)
-            end
-
-            table.sort(nodes, function(a, b)
-                return (a - _G.positions.entrancePos).Magnitude < (b - _G.positions.entrancePos).Magnitude
-            end)
-
-            for _, position in ipairs(nodes) do
-                if (position - _G.positions.exitPos).Magnitude < 10 then
+    for _, Room in Workspace.CurrentRooms:GetChildren() do
+        if Room:FindFirstChild("PathfindNodes") then
+            for _, Node in Room.PathfindNodes:GetChildren() do
+                if _G.positions.exitPos and (Node.CFrame.Position - _G.positions.exitPos.Position).Magnitude < 10 then
                     -- 如果节点距离出口小于10个单位，则直接移动到出口
                     self:MoveTo(_G.positions.exitPos, speed)
                     return
                 end
+                self:MoveTo(Node.CFrame, speed)
             end
         end
     end
@@ -106,10 +97,10 @@ function _G.EntitySpawner:FindFarthestExit(speed)
     for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
         local roomExit = room:FindFirstChild("RoomExit")
         if roomExit then
-            local distance = (roomExit.Position - _G.positions.entrancePos).Magnitude
+            local distance = (roomExit.CFrame.Position - _G.positions.entrancePos.Position).Magnitude
             if distance > farthestDistance then
                 farthestDistance = distance
-                exit = roomExit.Position
+                exit = roomExit.CFrame
             end
         end
     end
@@ -124,14 +115,14 @@ function _G.EntitySpawner:FindFarthestExit(speed)
 end
 
 -- 动画移动实体
-function _G.EntitySpawner:MoveTo(position, speed)
+function _G.EntitySpawner:MoveTo(cframe, speed)
     local primaryPart = _G.entity.PrimaryPart
     primaryPart.Anchored = true
     primaryPart.CanCollide = false  -- 确保碰撞检测关闭
 
     -- 确保直线移动
-    local tweenInfo = TweenInfo.new((primaryPart.Position - position).Magnitude / speed)
-    local tweenGoal = {CFrame = CFrame.new(position)}
+    local tweenInfo = TweenInfo.new((primaryPart.Position - cframe.Position).Magnitude / speed)
+    local tweenGoal = {CFrame = cframe}
     local tween = TweenService:Create(primaryPart, tweenInfo, tweenGoal)
     tween:Play()
     tween.Completed:Wait()
@@ -145,7 +136,7 @@ function _G.EntitySpawner:NavigateToRoom(params)
     end
 
     -- 将实体位置设定在入口位置
-    _G.entity:SetPrimaryPartCFrame(CFrame.new(_G.positions.entrancePos))
+    _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
 
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
@@ -197,6 +188,7 @@ function _G.EntitySpawner:CheckForPlayers(range)
                 if humanoid then
                     humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
                 end
+                -- 发送死亡消息
                 -- 发送死亡消息
                 self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
                 -- 执行jumpscare（如果启用）
