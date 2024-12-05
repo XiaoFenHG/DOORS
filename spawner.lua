@@ -77,40 +77,48 @@ end
 function _G.EntitySpawner:MoveAlongPath(speed)
     for _, Room in Workspace.CurrentRooms:GetChildren() do
         if Room:FindFirstChild("PathfindNodes") then
-            for _, Node in Room.PathfindNodes:GetChildren() do
-                if _G.positions.exitPos and (Node.CFrame.Position - _G.positions.exitPos.Position).Magnitude < 10 then
-                    -- 如果节点距离出口小于10个单位，则直接移动到出口
+            local nodes = Room.PathfindNodes:GetChildren()
+            for i, Node in ipairs(nodes) do
+                self:MoveTo(Node.CFrame, speed)
+
+                -- 在移动时检查范围内是否有玩家
+                self:CheckForPlayers(speed, Node.CFrame)
+
+                -- 如果是最后一个节点，直接移动到玩家当前房间位置
+                if i == #nodes then
                     self:MoveTo(_G.positions.exitPos, speed)
                     return
                 end
-                self:MoveTo(Node.CFrame, speed)
             end
         end
     end
 end
 
--- 查找最远的出口
-function _G.EntitySpawner:FindFarthestExit(speed)
-    local farthestDistance = 0
-    local exit = nil
+-- 查找玩家所在房间出口
+function _G.EntitySpawner:FindPlayerRoomExit()
+    local player = Players.LocalPlayer
+    local character = player.Character
+    local playerRoom = nil
 
-    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
-        local roomExit = room:FindFirstChild("RoomExit")
-        if roomExit then
-            local distance = (roomExit.CFrame.Position - _G.positions.entrancePos.Position).Magnitude
-            if distance > farthestDistance then
-                farthestDistance = distance
-                exit = roomExit.CFrame
+    if character and character.PrimaryPart then
+        for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
+            if room:IsAncestorOf(character) then
+                playerRoom = room
+                break
             end
         end
     end
 
-    if exit then
-        _G.positions.exitPos = exit
-        -- 动画移动到出口
-        self:MoveTo(exit, speed)
+    if playerRoom then
+        local roomExit = playerRoom:FindFirstChild("RoomExit")
+        if roomExit then
+            _G.positions.exitPos = roomExit.CFrame
+            -- 动画移动到出口
+            -- 动画移动到出口
+            self:MoveTo(_G.positions.exitPos, _G.params.MoveSpeed)
+        end
     else
-        error("No RoomExit found in currentRooms.")
+        error("Player room exit not found.")
     end
 end
 
@@ -126,10 +134,20 @@ function _G.EntitySpawner:MoveTo(cframe, speed)
     local tween = TweenService:Create(primaryPart, tweenInfo, tweenGoal)
     tween:Play()
     tween.Completed:Wait()
+
+    -- 动画完成后检查是否到达出口
+    if primaryPart.Position == cframe.Position and cframe == _G.positions.exitPos then
+        -- 播放下坠动画并消失
+        self:PlayFallAnimation()
+        _G.entity:Destroy()
+    end
 end
 
 -- 导航逻辑
 function _G.EntitySpawner:NavigateToRoom(params)
+    -- 设置全局参数
+    _G.params = params
+
     -- 确保入口和出口位置已设置
     if not _G.positions or not _G.positions.entrancePos then
         error("Entrance position not set.")
@@ -145,55 +163,41 @@ function _G.EntitySpawner:NavigateToRoom(params)
     self:MoveAlongPath(params.MoveSpeed)
 
     -- 获取并移动到出口位置
-    self:FindFarthestExit(params.MoveSpeed)
+    self:FindPlayerRoomExit()
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
 end
 
--- 反弹逻辑
-function _G.EntitySpawner:Rebound(minRebounds, maxRebounds, waitSeconds, moveSpeed)
-    local reboundTimes = math.random(minRebounds, maxRebounds)
-    for i = 1, reboundTimes do
-        self:MoveTo(_G.positions.exitPos, moveSpeed)
-        self:Shake(1, 0.2)  -- 震动效果
-        wait(waitSeconds)
-        self:MoveTo(_G.positions.entrancePos, moveSpeed)
-        self:Shake(1, 0.2)  -- 震动效果
-        wait(waitSeconds)
-    end
-end
-
 -- 播放下坠动画
 function _G.EntitySpawner:PlayFallAnimation()
     local primaryPart = _G.entity.PrimaryPart
-    primaryPart.Anchored = true
+    primaryPart.Anchored = false
     primaryPart.CanCollide = false
     for i = 1, 100 do
-        primaryPart.Position = primaryPart.Position - Vector3.new(0, 0.1, 0)
+        primaryPart.CFrame = primaryPart.CFrame * CFrame.new(0, -0.1, 0)
         RunService.Heartbeat:Wait()
     end
 end
 
 -- 检测范围内是否有玩家
-function _G.EntitySpawner:CheckForPlayers(range)
+function _G.EntitySpawner:CheckForPlayers(speed, cframe)
     local primaryPart = _G.entity.PrimaryPart
     for _, player in pairs(Players:GetPlayers()) do
         local character = player.Character
         if character and character.PrimaryPart then
             local distance = (character.PrimaryPart.Position - primaryPart.Position).Magnitude
-            if distance <= range and not character:GetAttribute("Hiding") then
+            if distance <= _G.params.DetectionRange and not character:GetAttribute("Hiding") then
                 -- 触发伤害逻辑
                 local humanoid = character:FindFirstChildWhichIsA("Humanoid")
                 if humanoid then
                     humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
                 end
                 -- 发送死亡消息
-                -- 发送死亡消息
-                self:SendDeathMessage(_G.deathMessage, _G.entity.Name)
+                self:SendDeathMessage(_G.params.DeathMessage, _G.entity.Name)
                 -- 执行jumpscare（如果启用）
-                if _G.enableJumpscare then
-                    self:Jumpscare(_G.jumpscareImageID, _G.jumpscareAudioID)
+                if _G.params.EnableJumpscare then
+                    self:Jumpscare(_G.params.JumpscareImageID, _G.params.JumpscareAudioID)
                 end
             end
         end
