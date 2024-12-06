@@ -2,6 +2,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 _G.EntitySpawner = {}
 
@@ -159,6 +160,14 @@ function _G.EntitySpawner:NavigateToRoom(params)
 
     -- 将实体位置设定在入口位置
     _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
+
+    -- 路径更新逻辑
+    ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
+        local room = Workspace.CurrentRooms[v]
+        local nodes = room.PathfindNodes:Clone()
+        nodes.Parent = room
+        nodes.Name = 'Nodes'
+    end)
 
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
