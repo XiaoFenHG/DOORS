@@ -98,27 +98,40 @@ function _G.EntitySpawner:FindFarthestExit()
 end
 
 -- 获取路径节点并按顺序移动
-function _G.EntitySpawner:MoveAlongPath(speed)
+function _G.EntitySpawner:GetPathNodes(latestRoom)
     local nodes = {}
-
-    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
-        local pathNodes = room:FindFirstChild("PathfindNodes")
-        if pathNodes then
-            for _, node in pairs(pathNodes:GetChildren()) do
-                table.insert(nodes, node.CFrame)
+    for i = 1, latestRoom do
+        local room = Workspace.CurrentRooms:FindFirstChild(tostring(i))
+        if room then
+            local pathNodes = room:FindFirstChild("Nodes") or room:FindFirstChild("PathfindNodes")
+            if pathNodes then
+                for _, node in pairs(pathNodes:GetChildren()) do
+                    table.insert(nodes, node.CFrame)
+                end
             end
         end
     end
-
     table.sort(nodes, function(a, b)
         return (a.Position - _G.positions.entrancePos.Position).Magnitude < (b.Position - _G.positions.entrancePos.Position).Magnitude
     end)
+    return nodes
+end
 
-    for i, cframe in ipairs(nodes) do
-        self:MoveTo(cframe, speed)
+-- 动画移动到路径节点
+function _G.EntitySpawner:MoveToWaypoints(waypoints, speed)
+    for i, cframe in ipairs(waypoints) do
+        local distance = (_G.entity.PrimaryPart.Position - cframe.Position).Magnitude
+        local moveTime = distance / speed
+        local tweenInfo = TweenInfo.new(moveTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(_G.entity.PrimaryPart, tweenInfo, {CFrame = cframe})
+        tween:Play()
+        tween.Completed:Wait()
+
+        -- 在移动时检查范围内是否有玩家
         self:CheckForPlayers(speed, cframe)
 
-        if i == #nodes then
+        if i == #waypoints then
+            -- 动画移动到出口
             self:MoveTo(_G.positions.exitPos, speed)
         end
     end
@@ -131,7 +144,9 @@ function _G.EntitySpawner:MoveTo(cframe, speed)
     primaryPart.CanCollide = false  -- 确保碰撞检测关闭
 
     -- 确保直线移动
-    local tweenInfo = TweenInfo.new((primaryPart.Position - cframe.Position).Magnitude / speed)
+    local distance = (primaryPart.Position - cframe.Position).Magnitude
+    local moveTime = distance / speed
+    local tweenInfo = TweenInfo.new(moveTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
     local tweenGoal = {CFrame = cframe}
     local tween = TweenService:Create(primaryPart, tweenInfo, tweenGoal)
     tween:Play()
@@ -164,16 +179,20 @@ function _G.EntitySpawner:NavigateToRoom(params)
     -- 路径更新逻辑
     ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
         local room = Workspace.CurrentRooms[v]
-        local nodes = room.PathfindNodes:Clone()
-        nodes.Parent = room
-        nodes.Name = 'Nodes'
+        local nodes = room:FindFirstChild("PathfindNodes")
+        if nodes then
+            nodes = nodes:Clone()
+            nodes.Parent = room
+            nodes.Name = 'Nodes'
+        end
     end)
 
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
 
-    -- 按路径节点移动
-    self:MoveAlongPath(params.MoveSpeed)
+    -- 获取路径节点并按顺序移动
+    local waypoints = self:GetPathNodes(ReplicatedStorage.GameData.LatestRoom.Value)
+    self:MoveToWaypoints(waypoints, params.MoveSpeed)
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
@@ -214,6 +233,7 @@ function _G.EntitySpawner:CheckForPlayers(speed, cframe)
     end
 end
 
+-- 发送死亡消息
 -- 发送死亡消息
 function _G.EntitySpawner:SendDeathMessage(message, who)
     spawn(function()
