@@ -73,52 +73,52 @@ function _G.EntitySpawner:FindEntrance()
     end
 end
 
--- 获取路径节点并按顺序移动
-function _G.EntitySpawner:MoveAlongPath(speed)
-    for _, Room in Workspace.CurrentRooms:GetChildren() do
-        if Room:FindFirstChild("PathfindNodes") then
-            local nodes = Room.PathfindNodes:GetChildren()
-            for i, Node in ipairs(nodes) do
-                self:MoveTo(Node.CFrame, speed)
+-- 查找最远的出口
+function _G.EntitySpawner:FindFarthestExit()
+    local farthestDistance = 0
+    local exit = nil
 
-                -- 在移动时检查范围内是否有玩家
-                self:CheckForPlayers(speed, Node.CFrame)
-
-                -- 如果是最后一个节点，直接移动到玩家当前房间位置
-                if i == #nodes then
-                    self:MoveTo(_G.positions.exitPos, speed)
-                    return
-                end
+    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
+        local roomExit = room:FindFirstChild("RoomExit")
+        if roomExit then
+            local distance = (roomExit.CFrame.Position - _G.positions.entrancePos.Position).Magnitude
+            if distance > farthestDistance then
+                farthestDistance = distance
+                exit = roomExit.CFrame
             end
         end
+    end
+
+    if exit then
+        _G.positions.exitPos = exit
+    else
+        error("No RoomExit found in currentRooms.")
     end
 end
 
--- 查找玩家所在房间出口
-function _G.EntitySpawner:FindPlayerRoomExit()
-    local player = Players.LocalPlayer
-    local character = player.Character
-    local playerRoom = nil
+-- 获取路径节点并按顺序移动
+function _G.EntitySpawner:MoveAlongPath(speed)
+    local nodes = {}
 
-    if character and character.PrimaryPart then
-        for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
-            if room:IsAncestorOf(character) then
-                playerRoom = room
-                break
+    for _, room in pairs(Workspace.CurrentRooms:GetChildren()) do
+        local pathNodes = room:FindFirstChild("PathfindNodes")
+        if pathNodes then
+            for _, node in pairs(pathNodes:GetChildren()) do
+                table.insert(nodes, node.CFrame)
             end
         end
-    end
 
-    if playerRoom then
-        local roomExit = playerRoom:FindFirstChild("RoomExit")
-        if roomExit then
-            _G.positions.exitPos = roomExit.CFrame
-            -- 动画移动到出口
-            -- 动画移动到出口
-            self:MoveTo(_G.positions.exitPos, _G.params.MoveSpeed)
+    table.sort(nodes, function(a, b)
+        return (a.Position - _G.positions.entrancePos.Position).Magnitude < (b.Position - _G.positions.entrancePos.Position).Magnitude
+    end)
+
+    for i, cframe in ipairs(nodes) do
+        self:MoveTo(cframe, speed)
+        self:CheckForPlayers(speed, cframe)
+
+        if i == #nodes then
+            self:MoveTo(_G.positions.exitPos, speed)
         end
-    else
-        error("Player room exit not found.")
     end
 end
 
@@ -153,6 +153,9 @@ function _G.EntitySpawner:NavigateToRoom(params)
         error("Entrance position not set.")
     end
 
+    -- 查找最远的出口位置
+    self:FindFarthestExit()
+
     -- 将实体位置设定在入口位置
     _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
 
@@ -161,9 +164,6 @@ function _G.EntitySpawner:NavigateToRoom(params)
 
     -- 按路径节点移动
     self:MoveAlongPath(params.MoveSpeed)
-
-    -- 获取并移动到出口位置
-    self:FindPlayerRoomExit()
 
     -- 检测范围内是否有玩家
     self:CheckForPlayers(params.DetectionRange)
