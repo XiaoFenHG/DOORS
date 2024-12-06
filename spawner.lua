@@ -107,6 +107,7 @@ function _G.EntitySpawner:MoveAlongPath(speed)
                 table.insert(nodes, node.CFrame)
             end
         end
+    end
 
     table.sort(nodes, function(a, b)
         return (a.Position - _G.positions.entrancePos.Position).Magnitude < (b.Position - _G.positions.entrancePos.Position).Magnitude
