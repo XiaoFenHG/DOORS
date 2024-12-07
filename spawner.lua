@@ -12,6 +12,7 @@ function _G.EntitySpawner:LoadModelAndGetObject(params)
     local model = game:GetObjects("rbxassetid://" .. params.Asset)[1]
     if model then
         _G.entity = model
+        _G.entity.Name = params.DeathCause  -- 设置实体的名字为 DeathCause
 
         -- 确保模型有 PrimaryPart
         if not _G.entity.PrimaryPart then
@@ -151,9 +152,15 @@ function _G.EntitySpawner:MoveTo(cframe, speed)
 
     -- 检查是否到达出口
     if cframe == _G.positions.exitPos then
-        -- 播放下坠动画并消失
-        self:PlayFallAnimation()
-        _G.entity:Destroy()
+        if _G.params.Rebound and _G.params.Rebound > 0 then
+            _G.params.Rebound = _G.params.Rebound - 1
+            self:FindEntrance()  -- 找回入口
+            self:MoveAlongPath(_G.params.MoveSpeed)  -- 重新沿路径移动
+        else
+            -- 播放下坠动画并消失
+            self:PlayFallAnimation()
+            _G.entity:Destroy()
+        end
     end
 end
 
@@ -218,8 +225,9 @@ function _G.EntitySpawner:CheckForPlayers(speed, cframe)
                 if humanoid then
                     humanoid:TakeDamage(humanoid.MaxHealth)  -- 造成最大伤害
                 end
-                -- 发送死亡消息
+                -- 发送死亡消息，并将 Cause 设置为实体名字
                 self:SendDeathMessage(_G.params.DeathMessage, _G.entity.Name)
+                game:GetService("ReplicatedStorage").GameStats["Player_".. player.Name].Total.DeathCause.Value = _G.entity.Name
                 -- 执行jumpscare（如果启用）
                 if _G.params.EnableJumpscare then
                     self:Jumpscare(_G.params.JumpscareImageID, _G.params.JumpscareAudioID)
