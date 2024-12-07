@@ -122,11 +122,13 @@ function _G.EntitySpawner:MoveAlongPath(speed)
     end)
 
     for i, cframe in ipairs(nodes) do
+        -- 只移动 x 和 z 轴，不移动 y 轴
+        local targetCFrame = CFrame.new(cframe.Position.X, _G.entity.PrimaryPart.Position.Y, cframe.Position.Z)
         -- 移动到路径节点
-        self:MoveTo(cframe, speed)
+        self:MoveTo(targetCFrame, speed)
 
         -- 在移动时检查范围内是否有玩家
-        self:CheckForPlayers(speed, cframe)
+        self:CheckForPlayers(speed, targetCFrame)
 
         if i == #nodes then
             -- 移动到出口
