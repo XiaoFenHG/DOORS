@@ -178,18 +178,22 @@ function _G.EntitySpawner:NavigateToRoom(params)
     -- 将实体位置设定在入口位置
     _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
 
-    -- 路径更新逻辑，始终保持更新
-    game:GetService("RunService").Heartbeat:Connect(function()
-        local latestRoom = Workspace.CurrentRooms[tostring(ReplicatedStorage.GameData.LatestRoom.Value)]
-        if latestRoom then
-            local nodes = latestRoom:FindFirstChild("PathfindNodes")
-            if nodes then
-                nodes = nodes:Clone()
-                nodes.Parent = latestRoom
-                nodes.Name = 'Nodes'
-            end
+    -- 路径更新逻辑，始终保持更
+    -- 路径更新逻辑，循环执行
+    coroutine.wrap(function()
+        while true do
+            ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
+                local room = Workspace.CurrentRooms[v]
+                local nodes = room:FindFirstChild("PathfindNodes")
+                if nodes then
+                    nodes = nodes:Clone()
+                    nodes.Parent = room
+                    nodes.Name = 'Nodes'
+                end
+            end)
+            wait(0.1)  -- 添加一个短暂的等待时间以防止过度频繁的更新
         end
-    end)
+    end)()
 
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
