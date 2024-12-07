@@ -137,7 +137,7 @@ function _G.EntitySpawner:MoveAlongPath(speed)
     end
 end
 
--function _G.EntitySpawner:MoveTo(cframe, speed)
+function _G.EntitySpawner:MoveTo(cframe, speed)
     local primaryPart = _G.entity.PrimaryPart
     primaryPart.Anchored = true
     primaryPart.CanCollide = false  -- 确保碰撞检测关闭
@@ -163,7 +163,43 @@ end
     end
 end
 -- 导航逻辑
+function _G.EntitySpawner:NavigateToRoom(params)
+    -- 设置全局参数
+    _G.params = params
 
+    -- 确保入口和出口位置已设置
+    if not _G.positions or not _G.positions.entrancePos then
+        error("Entrance position not set.")
+    end
+
+    -- 查找最远的出口位置
+    self:FindFarthestExit()
+
+    -- 将实体位置设定在入口位置
+    _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
+
+    -- 路径更新逻辑，始终保持更新
+    game:GetService("RunService").Heartbeat:Connect(function()
+        local latestRoom = Workspace.CurrentRooms[tostring(ReplicatedStorage.GameData.LatestRoom.Value)]
+        if latestRoom then
+            local nodes = latestRoom:FindFirstChild("PathfindNodes")
+            if nodes then
+                nodes = nodes:Clone()
+                nodes.Parent = latestRoom
+                nodes.Name = 'Nodes'
+            end
+        end
+    end)
+
+    -- 移动前等待时间
+    wait(params.WaitBeforeMove or 0)
+
+    -- 按路径节点移动
+    self:MoveAlongPath(params.MoveSpeed)
+
+    -- 检测范围内是否有玩家
+    self:CheckForPlayers(params.DetectionRange)
+end
 
 -- 播放下坠动画
 function _G.EntitySpawner:PlayFallAnimation()
