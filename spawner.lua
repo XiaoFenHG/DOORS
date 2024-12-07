@@ -180,21 +180,15 @@ function _G.EntitySpawner:NavigateToRoom(params)
 
     -- 路径更新逻辑，始终保持更
     -- 路径更新逻辑，循环执行
-    coroutine.wrap(function()
-        while true do
-            ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
-                local room = Workspace.CurrentRooms[v]
-                local nodes = room:FindFirstChild("PathfindNodes")
-                if nodes then
-                    nodes = nodes:Clone()
-                    nodes.Parent = room
-                    nodes.Name = 'Nodes'
-                end
-            end)
-            wait(0.1)  -- 添加一个短暂的等待时间以防止过度频繁的更新
+    ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
+        local room = Workspace.CurrentRooms[v]
+        local nodes = room:FindFirstChild("PathfindNodes")
+        if nodes then
+            nodes = nodes:Clone()
+            nodes.Parent = room
+            nodes.Name = 'Nodes'
         end
-    end)()
-
+    end)
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
 
