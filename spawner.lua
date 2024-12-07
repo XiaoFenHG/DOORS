@@ -132,11 +132,12 @@ function _G.EntitySpawner:MoveAlongPath(speed)
 
         if i == #nodes then
             -- 移动到出口
-            self:MoveTo(_G.positions.exitPos, speed)
+            self:MoveTo(CFrame.new(_G.positions.exitPos.Position.X, _G.entity.PrimaryPart.Position.Y, _G.positions.exitPos.Position.Z), speed)
         end
     end
 end
 
+-- 移动实体
 function _G.EntitySpawner:MoveTo(cframe, speed)
     local primaryPart = _G.entity.PrimaryPart
     primaryPart.Anchored = true
@@ -152,16 +153,17 @@ function _G.EntitySpawner:MoveTo(cframe, speed)
     tween.Completed:Wait()
 
     -- 检查是否到达出口
-    if (cframe.Position - _G.positions.exitPos.Position).Magnitude < 1 then
+    if cframe.Position:FuzzyEq(_G.positions.exitPos.Position, 0.1) then
         -- 播放下坠动画并消失
         self:PlayFallAnimation()
         _G.entity:Destroy()
-    elseif _G.params.Rebound and _G.params.Rebound > 0 then
+    elseif _G.params.Rebound and type(_G.params.Rebound) == "number" and _G.params.Rebound > 0 then
         _G.params.Rebound = _G.params.Rebound - 1
         self:FindEntrance()  -- 找回入口
         self:MoveAlongPath(_G.params.MoveSpeed)  -- 重新沿路径移动
     end
 end
+
 -- 导航逻辑
 function _G.EntitySpawner:NavigateToRoom(params)
     -- 设置全局参数
@@ -178,17 +180,24 @@ function _G.EntitySpawner:NavigateToRoom(params)
     -- 将实体位置设定在入口位置
     _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
 
-    -- 路径更新逻辑，始终保持更
-    -- 路径更新逻辑，循环执行
-    ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
-        local room = Workspace.CurrentRooms[v]
-        local nodes = room:FindFirstChild("PathfindNodes")
-        if nodes then
-            nodes = nodes:Clone()
-            nodes.Parent = room
-            nodes.Name = 'Nodes'
+    -- 路径更新逻辑，始终保持更新
+    coroutine.wrap(function()
+        while true do
+            for v = ReplicatedStorage.GameData.LatestRoom.Value, ReplicatedStorage.GameData.LatestRoom.Value + 1 do
+                local room = Workspace.CurrentRooms[v]
+                if room then
+                    local nodes = room:FindFirstChild("PathfindNodes")
+                    if nodes then
+                        nodes = nodes:Clone()
+                        nodes.Parent = room
+                        nodes.Name = 'Nodes'
+                    end
+                end
+            end
+            wait(0.1)  -- 添加一个短暂的等待时间以防止过度频繁的更新
         end
-    end)
+    end)()
+
     -- 移动前等待时间
     wait(params.WaitBeforeMove or 0)
 
