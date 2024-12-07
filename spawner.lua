@@ -4,38 +4,85 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- 加载模块
+local vynixuModules = {
+    Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Functions.lua"))()
+}
+local assets = {
+    Repentance = vynixuModules.Functions.LoadCustomInstance("https://github.com/RegularVynixu/Utilities/blob/main/Doors/Entity%20Spawner/Assets/Repentance.rbxm?raw=true")
+}
+
 _G.EntitySpawner = {}
 
 -- 加载模型并获取对象
 function _G.EntitySpawner:LoadModelAndGetObject(params)
     -- 加载模型
-    local model = game:GetObjects("rbxassetid://" .. params.Asset)[1]
-    if model then
-        _G.entity = model
-        _G.entity.Name = params.DeathCause  -- 设置实体的名字为 DeathCause
+    local asset = params.Asset
+    local success, entityModel
 
-        -- 确保模型有 PrimaryPart
-        if not _G.entity.PrimaryPart then
-            _G.entity.PrimaryPart = _G.entity:FindFirstChildWhichIsA("BasePart") or _G.entity:FindFirstChildWhichIsA("MeshPart")
-        end
+    if typeof(asset) == "Instance" and asset:IsA("Model") then
+        success, entityModel = true, asset
 
-        _G.entity.PrimaryPart.Anchored = true
-        _G.entity.PrimaryPart.CanCollide = false  -- 确保碰撞检测关闭
-        _G.entity.Parent = Workspace
+    elseif typeof(asset) == "string" then
+        success, entityModel = pcall(function()
+            local m = vynixuModules.Functions.LoadCustomInstance(asset)
+            if m then
+                if m.ClassName ~= "Model" then
+                    warn("Entity asset is not a model, returning.")
+                    return
+                end
+            else
+                warn("Failed to load entity asset, returning.")
+                return
+            end
+            return m
+        end)
 
-        -- 获取入口位置
-        self:FindEntrance()
+    elseif typeof(asset) == "number" then
+        success, entityModel = pcall(function()
+            return game:GetObjects("rbxassetid://" .. asset)[1]
+        end)
 
-        -- 将实体位置设定在入口位置
-        if _G.positions and _G.positions.entrancePos then
-            _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
-        else
-            error("Entrance position not found.")
-        end
+    else
+        warn("Invalid entity asset type, returning.")
+        return
+    end
 
-        -- 自定义颜色
-        if params.EnableCustomColor then
-            self:PlaceColor(params.CustomColor)
+    -- Construct and return entityTable
+    if success and entityModel then
+        local root = entityModel.PrimaryPart or entityModel:FindFirstChildWhichIsA("BasePart")
+        if root then
+            root.Anchored = true
+            entityModel.PrimaryPart = root
+
+            -- Entity custom name
+            local c = params
+            if c.Name and c.Name ~= "" then
+                entityModel.Name = c.Name
+            end
+
+            -- Entity default attributes
+            for name, value in pairs(params.DefaultAttributes or {}) do
+                entityModel:SetAttribute(name, value)
+            end
+
+            _G.entity = entityModel
+            _G.entity.Parent = Workspace
+
+            -- 获取入口位置
+            self:FindEntrance()
+
+            -- 将实体位置设定在入口位置
+            if _G.positions and _G.positions.entrancePos then
+                _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
+            else
+                error("Entrance position not found.")
+            end
+
+            -- 自定义颜色
+            if params.EnableCustomColor then
+                self:PlaceColor(params.CustomColor)
+            end
         end
     else
         error("Model not found in asset")
@@ -56,7 +103,7 @@ function _G.EntitySpawner:PlaceColor(color)
     end
 end
 
--- 查找房间入口
+-- -- 查找房间入口
 function _G.EntitySpawner:FindEntrance()
     local entrance = nil
 
@@ -153,7 +200,7 @@ function _G.EntitySpawner:MoveTo(cframe, speed)
     tween.Completed:Wait()
 
     -- 检查是否到达出口
-    if cframe.Position:FuzzyEq(_G.positions.exitPos.Position, 0.1) then
+    if (cframe.Position - _G.positions.exitPos.Position).Magnitude < 1 then
         -- 播放下坠动画并消失
         self:PlayFallAnimation()
         _G.entity:Destroy()
@@ -183,17 +230,20 @@ function _G.EntitySpawner:NavigateToRoom(params)
     -- 路径更新逻辑，始终保持更新
     coroutine.wrap(function()
         while true do
-            for v = ReplicatedStorage.GameData.LatestRoom.Value, ReplicatedStorage.GameData.LatestRoom.Value + 1 do
+            ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
                 local room = Workspace.CurrentRooms[v]
-                if room then
-                    local nodes = room:FindFirstChild("PathfindNodes")
-                    if nodes then
-                        nodes = nodes:Clone()
-                        nodes.Parent = room
-                        nodes.Name = 'Nodes'
+                local nextRoom = Workspace.CurrentRooms[tostring(v + 1)]
+                for _, r in pairs({room, nextRoom}) do
+                    if r then
+                        local nodes = r:FindFirstChild("PathfindNodes")
+                        if nodes then
+                            nodes = nodes:Clone()
+                            nodes.Parent = r
+                            nodes.Name = 'Nodes'
+                        end
                     end
                 end
-            end
+            end)
             wait(0.1)  -- 添加一个短暂的等待时间以防止过度频繁的更新
         end
     end)()
