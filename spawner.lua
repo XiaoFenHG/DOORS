@@ -137,8 +137,7 @@ function _G.EntitySpawner:MoveAlongPath(speed)
     end
 end
 
--- 移动实体
-function _G.EntitySpawner:MoveTo(cframe, speed)
+-function _G.EntitySpawner:MoveTo(cframe, speed)
     local primaryPart = _G.entity.PrimaryPart
     primaryPart.Anchored = true
     primaryPart.CanCollide = false  -- 确保碰撞检测关闭
@@ -153,55 +152,18 @@ function _G.EntitySpawner:MoveTo(cframe, speed)
     tween.Completed:Wait()
 
     -- 检查是否到达出口
-    if cframe == _G.positions.exitPos then
-        if _G.params.Rebound and _G.params.Rebound > 0 then
-            _G.params.Rebound = _G.params.Rebound - 1
-            self:FindEntrance()  -- 找回入口
-            self:MoveAlongPath(_G.params.MoveSpeed)  -- 重新沿路径移动
-        else
-            -- 播放下坠动画并消失
-            self:PlayFallAnimation()
-            _G.entity:Destroy()
-        end
+    if (cframe.Position - _G.positions.exitPos.Position).Magnitude < 1 then
+        -- 播放下坠动画并消失
+        self:PlayFallAnimation()
+        _G.entity:Destroy()
+    elseif _G.params.Rebound and _G.params.Rebound > 0 then
+        _G.params.Rebound = _G.params.Rebound - 1
+        self:FindEntrance()  -- 找回入口
+        self:MoveAlongPath(_G.params.MoveSpeed)  -- 重新沿路径移动
     end
 end
-
 -- 导航逻辑
-function _G.EntitySpawner:NavigateToRoom(params)
-    -- 设置全局参数
-    _G.params = params
 
-    -- 确保入口和出口位置已设置
-    if not _G.positions or not _G.positions.entrancePos then
-        error("Entrance position not set.")
-    end
-
-    -- 查找最远的出口位置
-    self:FindFarthestExit()
-
-    -- 将实体位置设定在入口位置
-    _G.entity:SetPrimaryPartCFrame(_G.positions.entrancePos)
-
-    -- 路径更新逻辑
-    ReplicatedStorage.GameData.LatestRoom.Changed:Connect(function(v)
-        local room = Workspace.CurrentRooms[v]
-        local nodes = room:FindFirstChild("PathfindNodes")
-        if nodes then
-            nodes = nodes:Clone()
-            nodes.Parent = room
-            nodes.Name = 'Nodes'
-        end
-    end)
-
-    -- 移动前等待时间
-    wait(params.WaitBeforeMove or 0)
-
-    -- 按路径节点移动
-    self:MoveAlongPath(params.MoveSpeed)
-
-    -- 检测范围内是否有玩家
-    self:CheckForPlayers(params.DetectionRange)
-end
 
 -- 播放下坠动画
 function _G.EntitySpawner:PlayFallAnimation()
