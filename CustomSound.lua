@@ -1,3 +1,4 @@
+-- 定义函数来获取自定义音效ID
 local function GetGitSoundID(GithubSnd, SoundName)
     SoundName = tostring(SoundName)
     local url = GithubSnd
@@ -6,10 +7,7 @@ local function GetGitSoundID(GithubSnd, SoundName)
     return (getcustomasset or getsynasset)("customObject_Sound_"..FileName..".mp3")
 end
 
-local SelfModules = {
-    Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Functions.lua"))(),
-}
-
+-- 定义播放自定义音效的函数
 local function PlayCustomSound(GithubSnd, SoundName, Volume)
     local SoundId = GetGitSoundID(GithubSnd, SoundName)
     local soundInstance = Instance.new("Sound")
@@ -17,8 +15,16 @@ local function PlayCustomSound(GithubSnd, SoundName, Volume)
     soundInstance.Volume = Volume or 1
     soundInstance.Parent = workspace
     soundInstance:Play()
+    return soundInstance
 end
 
-return {
-    PlayCustomSound = PlayCustomSound
-}
+-- 创建一个函数来循环检查音效是否正在播放
+local function EnsureSoundIsPlaying(soundInstance)
+    while true do
+        wait(0.0001)
+        if not soundInstance.IsPlaying then
+            soundInstance:Play()
+        end
+    end
+end
+
