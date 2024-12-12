@@ -1,3 +1,4 @@
+-- 定义函数来获取自定义音效ID
 local function GetGitSoundID(GithubSnd, SoundName)
     SoundName = tostring(SoundName)
     local url = GithubSnd
@@ -20,7 +21,16 @@ local function PlayCustomSound(GithubSnd, SoundName, Volume)
     return soundInstance
 end
 
-return {
-    PlayCustomSound = PlayCustomSound,
-    SelfModules = SelfModules
-}
+-- 创建一个函数来确保音效继续播放
+local function EnsureSoundIsPlaying(soundInstance)
+    spawn(function()
+        while true do
+            wait(0.0001)
+            if not soundInstance.IsPlaying then
+                soundInstance.TimePosition = soundInstance.TimePosition -- 保存当前播放位置
+                soundInstance:Play()
+            end
+        end
+    end)
+end
+
