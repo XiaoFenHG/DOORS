@@ -1,3 +1,4 @@
+-- 定义函数来获取自定义音效ID
 local function GetGitSoundID(GithubSnd, SoundName)
     SoundName = tostring(SoundName)
     local url = GithubSnd
@@ -8,19 +9,4 @@ end
 
 local SelfModules = {
     Functions = loadstring(game:HttpGet("https://raw.githubusercontent.com/RegularVynixu/Utilities/main/Functions.lua"))(),
-}
-
-local function PlayCustomSound(GithubSnd, SoundName, Volume)
-    local SoundId = GetGitSoundID(GithubSnd, SoundName)
-    local soundInstance = Instance.new("Sound")
-    soundInstance.SoundId = SoundId
-    soundInstance.Volume = Volume or 1
-    soundInstance.Parent = workspace
-    soundInstance:Play()
-    return soundInstance
-end
-
-return {
-    PlayCustomSound = PlayCustomSound,
-    SelfModules = SelfModules
 }
