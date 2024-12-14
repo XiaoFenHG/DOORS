@@ -11,7 +11,7 @@ function _G.Lib.Gui:CreateTitle(properties)
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.SourceSans
     title.TextSize = 24
-    title.TextXAlignment = Enum.TextXAlignment.Center  -- 标题居中对齐
+    title.TextXAlignment = Enum.TextXAlignment.Left  -- 标题文字靠左对齐
     return title
 end
 
@@ -21,8 +21,8 @@ function _G.Lib.Gui:CreateBackground()
     screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.Position = UDim2.new(0, 0, 0, 0)
+    frame.Size = UDim2.new(0.5, 0, 0.7, 0)  -- 设置为较小的长方形
+    frame.Position = UDim2.new(0.25, 0, 0.15, 0)  -- 居中位置
     frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     frame.BorderSizePixel = 0
     frame.Parent = screenGui
