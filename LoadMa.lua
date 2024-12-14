@@ -78,6 +78,7 @@ function _G.Lib.Gui:CreateTab(properties)
         contentFrame.Visible = not contentFrame.Visible
     end)
 
+    -- 定义方法
     function tab:AddButton(properties)
         local button = Instance.new("TextButton")
         button.Text = properties.text or "Button"
@@ -153,6 +154,7 @@ function _G.Lib.Gui:CreateTab(properties)
         return sliderFrame
     end
 
+    -- 返回tab对象，使其可以访问这些方法
     return tab
 end
 
