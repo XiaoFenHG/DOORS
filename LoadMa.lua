@@ -1,6 +1,6 @@
-_G.Lib = {}
+_G.Lib = _G.Lib or {}
 
-_G.Lib.Gui = {}
+_G.Lib.Gui = _G.Lib.Gui or {}
 
 function _G.Lib.Gui:CreateTitle(properties)
     local title = Instance.new("TextLabel")
@@ -155,3 +155,5 @@ function _G.Lib.Gui:CreateTab(properties)
 
     return tab
 end
+
+return _G.Lib
