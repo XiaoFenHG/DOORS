@@ -119,21 +119,24 @@ end
 local currentESPPlayer = nil
 
 game:GetService('RunService').RenderStepped:Connect(function()
-    safeCall(function()
-        if Toggles.AimToggle.Value then
-            local closestPlayer = getClosestPlayer()
-            if closestPlayer then
-                local aimPart = closestPlayer.Character and closestPlayer.Character:FindFirstChild('Head')
-                if aimPart then
-                    -- 调整视角到最近玩家的头部
-                    local player = game.Players.LocalPlayer
+    if Toggles.AimToggle.Value then
+        local closestPlayer = getClosestPlayer()
+        if closestPlayer and closestPlayer.Character then
+            local aimPart = closestPlayer.Character:FindFirstChild('Head')
+            if aimPart then
+                -- 调整视角到最近玩家的头部
+                local player = game.Players.LocalPlayer
+                if player and player.Character and player.Character:FindFirstChild('Head') then
                     local camera = workspace.CurrentCamera
                     camera.CFrame = CFrame.new(camera.CFrame.Position, aimPart.Position)
 
                     StatsGroupBox:Label('Target').Text = 'Target: ' .. closestPlayer.Name .. ' (' .. math.floor(aimPart.Position.X) .. ', ' .. math.floor(aimPart.Position.Y) .. ', ' .. math.floor(aimPart.Position.Z) .. ')'
 
-                    local health = closestPlayer.Character:FindFirstChildOfClass('Humanoid').Health
-                    StatsGroupBox:Label('Target Health').Text = 'Target Health: ' .. tostring(math.floor(health))
+                    local humanoid = closestPlayer.Character:FindFirstChildOfClass('Humanoid')
+                    if humanoid then
+                        local health = humanoid.Health
+                        StatsGroupBox:Label('Target Health').Text = 'Target Health: ' .. tostring(math.floor(health))
+                    end
 
                     if Toggles.AutoShootToggle.Value then
                         mouse1click() -- 触发射击动作
@@ -144,39 +147,37 @@ game:GetService('RunService').RenderStepped:Connect(function()
                 end
             end
         end
-    end)
+    end
 end)
 
 game:GetService('RunService').RenderStepped:Connect(function()
-    safeCall(function()
-        if Toggles.ESPToggle.Value then
-            local closestPlayer = getClosestPlayer()
-            if closestPlayer and closestPlayer.Character then
-                if currentESPPlayer and currentESPPlayer ~= closestPlayer then
-                    -- 移除当前ESP玩家的高亮
-                    local highlight = currentESPPlayer.Character:FindFirstChildOfClass('Highlight')
-                    if highlight then
-                        highlight:Destroy()
-                    end
-                end
-
-                -- 为新的目标玩家增加高亮
-                if not closestPlayer.Character:FindFirstChildOfClass('Highlight') then
-                    local highlight = Instance.new('Highlight')
-                    highlight.FillColor = Color3.new(1, 0, 0) -- 内部高亮颜色
-                    highlight.OutlineColor = Color3.new(0, 1, 0) -- 外部高亮颜色
-                    highlight.Parent = closestPlayer.Character
-                end
-
-                currentESPPlayer = closestPlayer
-            elseif not closestPlayer and currentESPPlayer then
-                -- 如果没有最近玩家，则移除原来的高亮
+    if Toggles.ESPToggle.Value then
+        local closestPlayer = getClosestPlayer()
+        if closestPlayer and closestPlayer.Character then
+            if currentESPPlayer and currentESPPlayer ~= closestPlayer then
+                -- 移除当前ESP玩家的高亮
                 local highlight = currentESPPlayer.Character:FindFirstChildOfClass('Highlight')
                 if highlight then
                     highlight:Destroy()
                 end
-                currentESPPlayer = nil
             end
+
+            -- 为新的目标玩家增加高亮
+            if not closestPlayer.Character:FindFirstChildOfClass('Highlight') then
+                local highlight = Instance.new('Highlight')
+                highlight.FillColor = Color3.new(1, 0, 0) -- 内部高亮颜色
+                highlight.OutlineColor = Color3.new(0, 1, 0) -- 外部高亮颜色
+                highlight.Parent = closestPlayer.Character
+            end
+
+            currentESPPlayer = closestPlayer
+        elseif not closestPlayer and currentESPPlayer then
+            -- 如果没有最近玩家，则移除原来的高亮
+            local highlight = currentESPPlayer.Character:FindFirstChildOfClass('Highlight')
+            if highlight then
+                highlight:Destroy()
+            end
+            currentESPPlayer = nil
         end
-    end)
+    end
 end)
