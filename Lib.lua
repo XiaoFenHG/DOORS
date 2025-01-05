@@ -187,11 +187,12 @@ function _G.Library:CreateMinimizeButton()
 end
 
 function _G.Library:CreateMobileMinimizeButton()
-    local openButton = Instance.new("ImageButton", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+    local openButton = Instance.new("ImageButton")
     openButton.Name = "OpenButton"
     openButton.Size = UDim2.new(0, 50, 0, 50)
-    openButton.Position = UDim2.new(0, 10, 0.5, -25)
+    openButton.Position = UDim2.new(0, 10, 0.5, -25) -- 中间左边
     openButton.Image = "rbxassetid://6031094678" -- 图标
+    openButton.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     openButton.Visible = false
 
     local minimizeButton = Instance.new("ImageButton", self.frame)
@@ -221,6 +222,3 @@ function _G.Library:CreateMobileMinimizeButton()
         openButton.Visible = false
     end)
 end
-
--- 示例使用
--- 示例使用
