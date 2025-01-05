@@ -1,10 +1,20 @@
 _G.Library = {}
 
+function _G.Library:DetectDeviceType()
+    local userInputService = game:GetService("UserInputService")
+    if userInputService.TouchEnabled then
+        return "Mobile"
+    else
+        return "Desktop"
+    end
+end
+
 function _G.Library:CreateWindow(title)
     local screenGui = Instance.new("ScreenGui")
     local frame = Instance.new("Frame")
     local titleLabel = Instance.new("TextLabel")
     local tabContainer = Instance.new("Frame")
+    local scrollingFrame = Instance.new("ScrollingFrame")
 
     screenGui.Name = "CustomUILib"
     screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -13,8 +23,8 @@ function _G.Library:CreateWindow(title)
     frame.Parent = screenGui
     frame.BackgroundColor3 = Color3.new(0, 0, 0) -- 设置背景为全黑
     frame.BorderSizePixel = 0
-    frame.Size = UDim2.new(0, 600, 0, 400)
-    frame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    frame.Size = UDim2.new(0, 800, 0, 600) -- 背景扩大
+    frame.Position = UDim2.new(0.5, -400, 0.5, -300)
     frame.Active = true
     frame.Draggable = true -- 设置可拖动
 
@@ -36,8 +46,18 @@ function _G.Library:CreateWindow(title)
     tabContainer.Size = UDim2.new(0, 100, 1, -50)
     tabContainer.Position = UDim2.new(0, 0, 0, 50)
 
+    scrollingFrame.Name = "ScrollingFrame"
+    scrollingFrame.Parent = frame
+    scrollingFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+    scrollingFrame.BackgroundTransparency = 1
+    scrollingFrame.Position = UDim2.new(0, 100, 0, 50)
+    scrollingFrame.Size = UDim2.new(1, -100, 1, -50)
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scrollingFrame.ScrollBarThickness = 10
+
     self.frame = frame
     self.tabContainer = tabContainer
+    self.scrollFrame = scrollingFrame
     self.tabs = {}
     self.currentTab = nil
     return self
@@ -71,11 +91,11 @@ function _G.Library:CreateTab(tabName)
     end)
 
     function tab:CreateButton(buttonText, onClick)
-        local button = Instance.new("TextButton", _G.Library.frame)
+        local button = Instance.new("TextButton", _G.Library.scrollFrame)
         button.Name = "CustomButton"
         button.BackgroundColor3 = Color3.new(1, 1, 1) -- 背景颜色设置为白色
-        button.Size = UDim2.new(0, 500, 0, 50)
-        button.Position = UDim2.new(0, 110, 0, #self.elements * 60 + 50)
+        button.Size = UDim2.new(1, -20, 0, 50)
+        button.Position = UDim2.new(0, 10, 0, #self.elements * 60)
         button.Font = Enum.Font.SourceSans
         button.Text = buttonText
         button.TextColor3 = Color3.new(0, 0, 0) -- 文本颜色设置为黑色
@@ -84,14 +104,15 @@ function _G.Library:CreateTab(tabName)
 
         button.MouseButton1Click:Connect(onClick)
         table.insert(self.elements, button)
+        _G.Library.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10) -- 更新滚动区域
     end
 
     function tab:CreateToggle(toggleText, onToggle)
-        local toggle = Instance.new("TextButton", _G.Library.frame)
+        local toggle = Instance.new("TextButton", _G.Library.scrollFrame)
         toggle.Name = "CustomToggle"
         toggle.BackgroundColor3 = Color3.new(1, 1, 1) -- 背景颜色设置为白色
-        toggle.Size = UDim2.new(0, 500, 0, 50)
-        toggle.Position = UDim2.new(0, 110, 0, #self.elements * 60 + 50)
+        toggle.Size = UDim2.new(1, -20, 0, 50)
+        toggle.Position = UDim2.new(0, 10, 0, #self.elements * 60)
         toggle.Font = Enum.Font.SourceSans
         toggle.Text = toggleText
         toggle.TextColor3 = Color3.new(0, 0, 0) -- 文本颜色设置为黑色
@@ -105,67 +126,101 @@ function _G.Library:CreateTab(tabName)
             toggle.Text = toggleText .. (isOn and " [On]" or " [Off]")
         end)
         table.insert(self.elements, toggle)
+        _G.Library.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10) -- 更新滚动区域
     end
 
-    function tab:CreateSlider(sliderText, min, max, onSlider)
-    local sliderFrame = Instance.new("Frame", _G.Library.frame)
-    sliderFrame.Name = "CustomSlider"
-    sliderFrame.BackgroundColor3 = Color3.new(1, 1, 1) -- 背景颜色设置为白色
-    sliderFrame.Size = UDim2.new(0, 500, 0, 50)
-    sliderFrame.Position = UDim2.new(0, 110, 0, #self.elements * 60 + 50)
-    sliderFrame.Visible = false
+    function tab:CreateTextBox(boxText, onTextChanged)
+    local textBoxFrame = Instance.new("Frame", _G.Library.scrollFrame)
+    textBoxFrame.Name = "CustomTextBox"
+    textBoxFrame.BackgroundColor3 = Color3.new(1, 1, 1) -- 背景颜色设置为白色
+    textBoxFrame.Size = UDim2.new(1, -20, 0, 50)
+    textBoxFrame.Position = UDim2.new(0, 10, 0, #self.elements * 60)
+    textBoxFrame.Visible = false
 
-    local sliderLabel = Instance.new("TextLabel", sliderFrame)
-    sliderLabel.Name = "SliderLabel"
-    sliderLabel.BackgroundColor3 = Color3.new(1, 1, 1)
-    sliderLabel.Size = UDim2.new(1, -100, 1, 0)
-    sliderLabel.Font = Enum.Font.SourceSans
-    sliderLabel.Text = sliderText
-    sliderLabel.TextColor3 = Color3.new(0, 0, 0) -- 文本颜色设置为黑色
-    sliderLabel.TextScaled = true
+    local textBoxLabel = Instance.new("TextLabel", textBoxFrame)
+    textBoxLabel.Name = "TextBoxLabel"
+    textBoxLabel.BackgroundColor3 = Color3.new(1, 1, 1)
+    textBoxLabel.Size = UDim2.new(0.3, 0, 1, 0)
+    textBoxLabel.Font = Enum.Font.SourceSans
+    textBoxLabel.Text = boxText
+    textBoxLabel.TextColor3 = Color3.new(0, 0, 0) -- 文本颜色设置为黑色
+    textBoxLabel.TextScaled = true
 
-    local fill = Instance.new("Frame", sliderFrame)
-    fill.Name = "Fill"
-    fill.BackgroundColor3 = Color3.new(0, 0, 0) -- 填充颜色
-    fill.Size = UDim2.new(0, 0, 1, 0)
+    local textBox = Instance.new("TextBox", textBoxFrame)
+    textBox.Name = "TextBox"
+    textBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+    textBox.Size = UDim2.new(0.7, 0, 1, 0)
+    textBox.Position = UDim2.new(0.3, 0, 0, 0)
+    textBox.Font = Enum.Font.SourceSans
+    textBox.Text = ""
+    textBox.TextColor3 = Color3.new(1, 1, 1)
+    textBox.TextScaled = true
 
-    local sliderButton = Instance.new("TextButton", sliderFrame)
-    sliderButton.Name = "SliderButton"
-    sliderButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-    sliderButton.Size = UDim2.new(0, 100, 1, 0)
-    sliderButton.Position = UDim2.new(1, -100, 0, 0)
-    sliderButton.Font = Enum.Font.SourceSans
-    sliderButton.Text = "0"
-    sliderButton.TextColor3 = Color3.new(1, 1, 1)
-    sliderButton.TextScaled = true
-
-    local dragging = false
-    sliderButton.MouseButton1Down:Connect(function()
-        dragging = true
+    textBox:GetPropertyChangedSignal("Text"):Connect(function()
+        onTextChanged(textBox.Text)
     end)
 
-    sliderButton.MouseButton1Up:Connect(function()
-        dragging = false
-    end)
-
-    sliderButton.MouseLeave:Connect(function()
-        dragging = false
-    end)
-
-    sliderFrame.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = math.clamp(input.Position.X - sliderFrame.AbsolutePosition.X, 0, sliderFrame.AbsoluteSize.X)
-            local value = math.clamp(math.floor((delta / sliderFrame.AbsoluteSize.X) * (max - min) + min), min, max)
-            sliderButton.Position = UDim2.new(delta / sliderFrame.AbsoluteSize.X, -50, 0, 0)
-            sliderButton.Text = tostring(value)
-            fill.Size = UDim2.new(delta / sliderFrame.AbsoluteSize.X, 0, 1, 0)
-            onSlider(value)
-        end
-    end)
-
-    table.insert(self.elements, sliderFrame)
+    table.insert(self.elements, textBoxFrame)
+    _G.Library.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10) -- 更新滚动区域
 end
 
 table.insert(_G.Library.tabs, tab)
 return tab
 end
+
+function _G.Library:CreateMinimizeButton()
+    local minimizeButton = Instance.new("ImageButton", self.frame)
+    minimizeButton.Name = "MinimizeButton"
+    minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+    minimizeButton.Position = UDim2.new(1, -40, 0, 10)
+    minimizeButton.Image = "rbxassetid://6031094678" -- 图标
+
+    local isMinimized = false
+    minimizeButton.MouseButton1Click:Connect(function()
+        isMinimized = not isMinimized
+        if isMinimized then
+            self.frame:TweenPosition(UDim2.new(0, -self.frame.Size.X.Offset, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true)
+        else
+            self.frame:TweenPosition(UDim2.new(0.5, -self.frame.Size.X.Offset / 2, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true)
+        end
+    end)
+end
+
+function _G.Library:CreateMobileMinimizeButton()
+    local openButton = Instance.new("ImageButton", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+    openButton.Name = "OpenButton"
+    openButton.Size = UDim2.new(0, 50, 0, 50)
+    openButton.Position = UDim2.new(0, 10, 0.5, -25)
+    openButton.Image = "rbxassetid://6031094678" -- 图标
+    openButton.Visible = false
+
+    local minimizeButton = Instance.new("ImageButton", self.frame)
+    minimizeButton.Name = "MinimizeButton"
+    minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+    minimizeButton.Position = UDim2.new(1, -40, 0, 10)
+    minimizeButton.Image = "rbxassetid://6031094678" -- 图标
+
+    local isMinimized = false
+    minimizeButton.MouseButton1Click:Connect(function()
+        isMinimized = not isMinimized
+        if isMinimized then
+            self.frame:TweenPosition(UDim2.new(0, -self.frame.Size.X.Offset, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true, function()
+                self.frame.Visible = false
+                openButton.Visible = true
+            end)
+        else
+            self.frame.Visible = true
+            self.frame:TweenPosition(UDim2.new(0.5, -self.frame.Size.X.Offset / 2, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true)
+            openButton.Visible = false
+        end
+    end)
+
+    openButton.MouseButton1Click:Connect(function()
+        self.frame.Visible = true
+        self.frame:TweenPosition(UDim2.new(0.5, -self.frame.Size.X.Offset / 2, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true)
+        openButton.Visible = false
+    end)
+end
+
+-- 示例使用
+-- 示例使用
