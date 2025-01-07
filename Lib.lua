@@ -60,6 +60,31 @@ function _G.Library:CreateWindow(title)
     self.scrollFrame = scrollingFrame
     self.tabs = {}
     self.currentTab = nil
+
+    -- Create Toggle UI button
+    local toggleUIButton = Instance.new("ImageButton", frame)
+    toggleUIButton.Name = "ToggleUIButton"
+    toggleUIButton.Size = UDim2.new(0, 30, 0, 30)
+    toggleUIButton.Position = UDim2.new(0, 10, 0, 50) -- 左上角下方50单位
+    toggleUIButton.Image = "rbxassetid://6031094678" -- 图标
+
+    toggleUIButton.MouseButton1Click:Connect(function()
+        self.frame.Visible = not self.frame.Visible
+    end)
+
+    -- Create Lock UI button
+    local lockUIButton = Instance.new("ImageButton", frame)
+    lockUIButton.Name = "LockUIButton"
+    lockUIButton.Size = UDim2.new(0, 30, 0, 30)
+    lockUIButton.Position = UDim2.new(0, 10, 0, 90) -- Toggle UI按钮的下方
+    lockUIButton.Image = "rbxassetid://6031094678" -- 图标
+
+    local isLocked = false
+    lockUIButton.MouseButton1Click:Connect(function()
+        isLocked = not isLocked
+        self.frame.Draggable = not isLocked
+    end)
+
     return self
 end
 
@@ -130,42 +155,38 @@ function _G.Library:CreateTab(tabName)
     end
 
     function tab:CreateTextBox(boxText, onTextChanged)
-    local textBoxFrame = Instance.new("Frame", _G.Library.scrollFrame)
-    textBoxFrame.Name = "CustomTextBox"
-    textBoxFrame.BackgroundColor3 = Color3.new(1, 1, 1) -- 背景颜色设置为白色
-    textBoxFrame.Size = UDim2.new(1, -20, 0, 50)
-    textBoxFrame.Position = UDim2.new(0, 10, 0, #self.elements * 60)
-    textBoxFrame.Visible = false
+        local textBoxFrame = Instance.new("Frame", _G.Library.scrollFrame)
+        textBoxFrame.Name = "CustomTextBox"
+        textBoxFrame.BackgroundColor3 = Color3.new(1, 1, 1) -- 背景颜色设置为白色
+        local textBoxLabel = Instance.new("TextLabel", textBoxFrame)
+        textBoxLabel.Name = "TextBoxLabel"
+        textBoxLabel.BackgroundColor3 = Color3.new(1, 1, 1)
+        textBoxLabel.Size = UDim2.new(0.3, 0, 1, 0)
+        textBoxLabel.Font = Enum.Font.SourceSans
+        textBoxLabel.Text = boxText
+        textBoxLabel.TextColor3 = Color3.new(0, 0, 0) -- 文本颜色设置为黑色
+        textBoxLabel.TextScaled = true
 
-    local textBoxLabel = Instance.new("TextLabel", textBoxFrame)
-    textBoxLabel.Name = "TextBoxLabel"
-    textBoxLabel.BackgroundColor3 = Color3.new(1, 1, 1)
-    textBoxLabel.Size = UDim2.new(0.3, 0, 1, 0)
-    textBoxLabel.Font = Enum.Font.SourceSans
-    textBoxLabel.Text = boxText
-    textBoxLabel.TextColor3 = Color3.new(0, 0, 0) -- 文本颜色设置为黑色
-    textBoxLabel.TextScaled = true
+        local textBox = Instance.new("TextBox", textBoxFrame)
+        textBox.Name = "TextBox"
+        textBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+        textBox.Size = UDim2.new(0.7, 0, 1, 0)
+        textBox.Position = UDim2.new(0.3, 0, 0, 0)
+        textBox.Font = Enum.Font.SourceSans
+        textBox.Text = ""
+        textBox.TextColor3 = Color3.new(1, 1, 1)
+        textBox.TextScaled = true
 
-    local textBox = Instance.new("TextBox", textBoxFrame)
-    textBox.Name = "TextBox"
-    textBox.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-    textBox.Size = UDim2.new(0.7, 0, 1, 0)
-    textBox.Position = UDim2.new(0.3, 0, 0, 0)
-    textBox.Font = Enum.Font.SourceSans
-    textBox.Text = ""
-    textBox.TextColor3 = Color3.new(1, 1, 1)
-    textBox.TextScaled = true
+        textBox:GetPropertyChangedSignal("Text"):Connect(function()
+            onTextChanged(textBox.Text)
+        end)
 
-    textBox:GetPropertyChangedSignal("Text"):Connect(function()
-        onTextChanged(textBox.Text)
-    end)
+        table.insert(self.elements, textBoxFrame)
+        _G.Library.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10) -- 更新滚动区域
+    end
 
-    table.insert(self.elements, textBoxFrame)
-    _G.Library.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10) -- 更新滚动区域
-end
-
-table.insert(_G.Library.tabs, tab)
-return tab
+    table.insert(_G.Library.tabs, tab)
+    return tab
 end
 
 function _G.Library:CreateMinimizeButton()
@@ -193,7 +214,7 @@ function _G.Library:CreateMobileMinimizeButton()
     openButton.Position = UDim2.new(0, 10, 0.5, -25) -- 中间左边
     openButton.Image = "rbxassetid://6031094678" -- 图标
     openButton.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    openButton.Visible = false
+    openButton.Visible = true -- Initially visible
 
     local minimizeButton = Instance.new("ImageButton", self.frame)
     minimizeButton.Name = "MinimizeButton"
