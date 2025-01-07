@@ -245,8 +245,11 @@ function _G.Library:CreateMinimizeButton()
     minimizeButton.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
         if isMinimized then
-            self.frame:TweenPosition(UDim2.new(0, -self.frame.Size.X.Offset, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true)
+            self.frame:TweenPosition(UDim2.new(0, -self.frame.Size.X.Offset, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true, function()
+                self.frame.Visible = false
+            end)
         else
+            self.frame.Visible = true
             self.frame:TweenPosition(UDim2.new(0.5, -self.frame.Size.X.Offset / 2, 0.5, -self.frame.Size.Y.Offset / 2), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.5, true)
         end
     end)
@@ -259,7 +262,7 @@ function _G.Library:CreateMobileMinimizeButton()
     openButton.Position = UDim2.new(0, 10, 0.5, -25)
     openButton.Image = "rbxassetid://6031094678" -- 图标
     openButton.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    openButton.Visible = false
+    openButton.Visible = true  -- Initially visible
 
     local minimizeButton = Instance.new("ImageButton", self.frame)
     minimizeButton.Name = "MinimizeButton"
