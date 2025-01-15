@@ -27,7 +27,7 @@ function _G.Library:CreateWindow(title)
     frame.Name = "MainFrame"
     frame.Parent = screenGui
     frame.BackgroundColor3 = Color3.new(1, 1, 1)
-    frame.BackgroundTransparency = 1 -- 完全透明背景
+    frame.BackgroundTransparency = 0 -- 完全透明背景
     frame.Size = UDim2.new(0, 800, 0, 600) 
     frame.Position = UDim2.new(0.5, -400, 0.5, -300)
     frame.Active = true
