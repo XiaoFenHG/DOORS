@@ -139,78 +139,78 @@ function _G.Library:CreateTab(tabName)
     end)
 
     function tab:CreateButton(buttonText, onClick)
-    local button = Instance.new("TextButton", self.scrollFrame)
-    button.Name = "CustomButton"
-    button.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
-    button.Size = UDim2.new(1, -20, 0, 50)
-    button.Position = UDim2.new(0, 10, 0, #self.elements * 60)
-    button.Font = Enum.Font.SourceSansBold
-    button.Text = buttonText
-    button.TextColor3 = Color3.new(0, 0, 0)
-    button.TextScaled = true
-    button.Visible = false
+        local button = Instance.new("TextButton", self.scrollFrame)
+        button.Name = "CustomButton"
+        button.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
+        button.Size = UDim2.new(1, -20, 0, 50)
+        button.Position = UDim2.new(0, 10, 0, #self.elements * 60)
+        button.Font = Enum.Font.SourceSansBold
+        button.Text = buttonText
+        button.TextColor3 = Color3.new(0, 0, 0)
+        button.TextScaled = true
+        button.Visible = false
 
-    button.MouseButton1Click:Connect(onClick)
-    table.insert(self.elements, button)
-    self.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10)
+        button.MouseButton1Click:Connect(onClick)
+        table.insert(self.elements, button)
+        self.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10)
+    end
+
+    function tab:CreateToggle(toggleText, onToggle)
+        local toggle = Instance.new("TextButton", self.scrollFrame)
+        toggle.Name = "CustomToggle"
+        toggle.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
+        toggle.Size = UDim2.new(1, -20, 0, 50)
+        toggle.Position = UDim2.new(0, 10, 0, #self.elements * 60)
+        toggle.Font = Enum.Font.SourceSansBold
+        toggle.Text = toggleText .. " [Off]"
+        toggle.TextColor3 = Color3.new(0, 0, 0)
+        toggle.TextScaled = true
+        toggle.Visible = false
+
+        local isOn = false
+        toggle.MouseButton1Click:Connect(function()
+            isOn = not isOn
+            onToggle(isOn)
+            toggle.Text = toggleText .. (isOn and " [On]" or " [Off]")
+        end)
+        table.insert(self.elements, toggle)
+        self.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10)
+    end
+
+    function tab:CreateTextBox(boxText, onTextChanged)
+        local textBoxFrame = Instance.new("Frame", self.scrollFrame)
+        textBoxFrame.Name = "CustomTextBox"
+        textBoxFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
+        textBoxFrame.Size = UDim2.new(1, -20, 0, 60)
+        textBoxFrame.Position = UDim2.new(0, 10, 0, #self.elements * 60)
+        textBoxFrame.Visible = false
+
+        local textBoxLabel = Instance.new("TextLabel", textBoxFrame)
+        textBoxLabel.Name = "TextBoxLabel"
+        textBoxLabel.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
+        textBoxLabel.Size = UDim2.new(0.3, 0, 1, 0)
+        textBoxLabel.Font = Enum.Font.SourceSansBold
+        textBoxLabel.Text = boxText
+        textBoxLabel.TextColor3 = Color3.new(0, 0, 0)
+        textBoxLabel.TextScaled = true
+
+        local textBox = Instance.new("TextBox", textBoxFrame)
+        textBox.Name = "TextBox"
+        textBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- 白色输入框
+        textBox.Size = UDim2.new(0.7, 0, 1, 0)
+        textBox.Position = UDim2.new(0.3, 0, 0, 0)
+        textBox.Font = Enum.Font.SourceSans
+        textBox.Text = ""
+        textBox.TextColor3 = Color3.new(0, 0, 0)
+        textBox.TextScaled = true
+
+        textBox:GetPropertyChangedSignal("Text"):Connect(function()
+            onTextChanged(textBox.Text)
+        end)
+
+        table.insert(self.elements, textBoxFrame)
+        self.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10)
+    end
+
+    table.insert(self.tabs, tab) -- 将Tab添加到tabs表中
 end
-
-function tab:CreateToggle(toggleText, onToggle)
-    local toggle = Instance.new("TextButton", self.scrollFrame)
-    toggle.Name = "CustomToggle"
-    toggle.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
-    toggle.Size = UDim2.new(1, -20, 0, 50)
-    toggle.Position = UDim2.new(0, 10, 0, #self.elements * 60)
-    toggle.Font = Enum.Font.SourceSansBold
-    toggle.Text = toggleText .. " [Off]"
-    toggle.TextColor3 = Color3.new(0, 0, 0)
-    toggle.TextScaled = true
-    toggle.Visible = false
-
-    local isOn = false
-    toggle.MouseButton1Click:Connect(function()
-        isOn = not isOn
-        onToggle(isOn)
-        toggle.Text = toggleText .. (isOn and " [On]" or " [Off]")
-    end)
-    table.insert(self.elements, toggle)
-    self.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10)
-end
-
-function tab:CreateTextBox(boxText, onTextChanged)
-    local textBoxFrame = Instance.new("Frame", self.scrollFrame)
-    textBoxFrame.Name = "CustomTextBox"
-    textBoxFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
-    textBoxFrame.Size = UDim2.new(1, -20, 0, 60)
-    textBoxFrame.Position = UDim2.new(0, 10, 0, #self.elements * 60)
-    textBoxFrame.Visible = false
-
-    local textBoxLabel = Instance.new("TextLabel", textBoxFrame)
-    textBoxLabel.Name = "TextBoxLabel"
-    textBoxLabel.BackgroundColor3 = Color3.fromRGB(200, 200, 200) -- 灰色背景
-    textBoxLabel.Size = UDim2.new(0.3, 0, 1, 0)
-    textBoxLabel.Font = Enum.Font.SourceSansBold
-    textBoxLabel.Text = boxText
-    textBoxLabel.TextColor3 = Color3.new(0, 0, 0)
-    textBoxLabel.TextScaled = true
-
-    local textBox = Instance.new("TextBox", textBoxFrame)
-    textBox.Name = "TextBox"
-    textBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- 白色输入框
-    textBox.Size = UDim2.new(0.7, 0, 1, 0)
-    textBox.Position = UDim2.new(0.3, 0, 0, 0)
-    textBox.Font = Enum.Font.SourceSans
-    textBox.Text = ""
-    textBox.TextColor3 = Color3.new(0, 0, 0)
-    textBox.TextScaled = true
-
-    textBox:GetPropertyChangedSignal("Text"):Connect(function()
-        onTextChanged(textBox.Text)
-    end)
-
-    table.insert(self.elements, textBoxFrame)
-    self.scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #self.elements * 60 + 10)
-end
-
-table.insert(_G.Library.tabs, tab)
-return tab
