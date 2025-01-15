@@ -11,6 +11,8 @@ end
 
 function _G.Library:CreateWindow(title)
     local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = game:GetService("CoreGui") -- 设置为 CoreGui
+
     local frame = Instance.new("Frame")
     local titleLabel = Instance.new("TextLabel")
     local closeButton = Instance.new("TextButton") -- 关闭按钮
@@ -18,9 +20,9 @@ function _G.Library:CreateWindow(title)
     local tabContainer = Instance.new("Frame")
     local tabIndicator = Instance.new("Frame") -- 当前Tab指示条
     local scrollingFrame = Instance.new("ScrollingFrame")
+    local UICorner = Instance.new("UICorner") -- 添加圆角
 
     screenGui.Name = "CustomUILib"
-    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
     frame.Name = "MainFrame"
     frame.Parent = screenGui
@@ -31,7 +33,8 @@ function _G.Library:CreateWindow(title)
     frame.Active = true
     frame.Draggable = true 
     frame.Visible = false -- 初始时隐藏
-    frame.CornerRadius = UDim.new(0, 10) -- 设置圆角
+    UICorner.CornerRadius = UDim.new(0, 10) -- 设置圆角
+    UICorner.Parent = frame
 
     titleLabel.Name = "TitleLabel"
     titleLabel.Parent = frame
@@ -45,15 +48,17 @@ function _G.Library:CreateWindow(title)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
     closeButton.Name = "CloseButton"
-    closeButton.Parent = titleLabel
+    closeButton.Parent = screenGui
     closeButton.BackgroundColor3 = Color3.new(1, 0, 0) -- 红色关闭按钮
-    closeButton.Size = UDim2.new(0, 50, 1, 0)
-    closeButton.Position = UDim2.new(1, -50, 0, 0)
+    closeButton.Size = UDim2.new(0, 50, 0, 50)
+    closeButton.Position = UDim2.new(0, 0, 0, 0) -- 位于左上角
     closeButton.Font = Enum.Font.SourceSansBold
     closeButton.BackgroundTransparency = 1 -- 完全透明背景
     closeButton.Text = "Close"
     closeButton.TextColor3 = Color3.new(1, 1, 1)
     closeButton.TextScaled = true
+    closeButton.ZIndex = 2
+    UICorner:Clone().Parent = closeButton -- 添加圆角
 
     closeButton.MouseButton1Click:Connect(function()
         frame.Visible = false
@@ -63,12 +68,14 @@ function _G.Library:CreateWindow(title)
     openButton.Parent = screenGui
     openButton.BackgroundColor3 = Color3.new(0, 0, 1) -- 蓝色打开按钮
     openButton.Size = UDim2.new(0, 100, 0, 50)
-    openButton.Position = UDim2.new(0.5, -50, 0.5, -25)
+    openButton.Position = UDim2.new(0, 0, 0, 60) -- 左上角下方30像素
     openButton.Font = Enum.Font.SourceSansBold
     openButton.BackgroundTransparency = 1 -- 完全透明背景
     openButton.Text = "Open UI"
     openButton.TextColor3 = Color3.new(1, 1, 1)
     openButton.TextScaled = true
+    openButton.ZIndex = 2
+    UICorner:Clone().Parent = openButton -- 添加圆角
 
     openButton.MouseButton1Click:Connect(function()
         frame.Visible = true
@@ -80,7 +87,7 @@ function _G.Library:CreateWindow(title)
     tabContainer.BackgroundTransparency = 1
     tabContainer.Size = UDim2.new(0, 120, 1, -50) -- 增大Tab布局
     tabContainer.Position = UDim2.new(0, 0, 0, 50)
-    tabContainer.CornerRadius = UDim.new(0, 10) -- 设置圆角
+    UICorner:Clone().Parent = tabContainer -- 添加圆角
 
     tabIndicator.Name = "TabIndicator"
     tabIndicator.Parent = tabContainer
@@ -96,7 +103,7 @@ function _G.Library:CreateWindow(title)
     scrollingFrame.Size = UDim2.new(1, -120, 1, -50)
     scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     scrollingFrame.ScrollBarThickness = 10
-    scrollingFrame.CornerRadius = UDim.new(0, 10) -- 设置圆角
+    UICorner:Clone().Parent = scrollingFrame -- 添加圆角
 
     self.frame = frame
     self.tabContainer = tabContainer
